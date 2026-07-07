@@ -651,13 +651,225 @@
     .reveal { opacity: 0; }
 
     /* ============================================================
-       14. RESPONSIVE
+       14. INDUSTRY DEMO MODAL — full-screen 3D animated mini-site
+       ============================================================ */
+    .demo-card { cursor: pointer; }
+
+    .demo-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 6000;
+      background: #070707;
+      overflow-x: hidden;
+      overflow-y: auto;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s var(--ease), visibility 0.5s var(--ease);
+      --accent: var(--gold); /* overridden per demo via inline style */
+    }
+    .demo-modal.open { opacity: 1; visibility: visible; }
+    body.modal-open { overflow: hidden; }
+
+    .dm-bar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 28px;
+      background: linear-gradient(#070707ee, #07070700);
+      backdrop-filter: blur(6px);
+    }
+    .dm-badge {
+      font-size: 0.72rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .dm-badge b { color: var(--accent); font-weight: 600; }
+    .dm-close {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      will-change: transform;
+      transition: transform 0.45s var(--ease), border-color 0.45s var(--ease);
+    }
+    .dm-close:hover { border-color: var(--accent); transform: rotate(90deg); }
+
+    .dm-hero {
+      position: relative;
+      min-height: 84vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 30px 24px 60px;
+      perspective: 1200px;
+    }
+    .dm-hero::before { /* soft accent glow behind the ring */
+      content: "";
+      position: absolute;
+      width: 60vw;
+      max-width: 640px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle,
+        color-mix(in srgb, var(--accent) 20%, transparent) 0%, transparent 62%);
+      top: 52%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .dm-hero .eyebrow { color: var(--accent); position: relative; }
+    .dm-hero h2 {
+      font-size: clamp(2.6rem, 8vw, 5.4rem);
+      color: var(--text);
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .dm-tag {
+      max-width: 42ch;
+      font-size: 1.08rem;
+      color: var(--text-dim);
+      margin-bottom: 30px;
+      position: relative;
+    }
+    .dm-cta {
+      position: relative;
+      border: none;
+      border-radius: 100px;
+      cursor: pointer;
+      padding: 16px 36px;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      color: #0a0a0a;
+      background: var(--accent);
+      will-change: transform;
+      transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
+    }
+    .dm-cta:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 34px -14px var(--accent);
+    }
+
+    /* 3D auto-rotating showcase ring */
+    .dm-stage {
+      position: relative;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 72px;
+      perspective: 1100px;
+    }
+    .ring3d {
+      position: relative;
+      transform-style: preserve-3d;
+      animation: ringspin 30s linear infinite;
+      will-change: transform;
+    }
+    @keyframes ringspin { to { transform: rotateY(360deg); } }
+    .ring-card {
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.01));
+      border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+      box-shadow: 0 24px 50px -30px #000;
+      backface-visibility: hidden;
+    }
+    .ring-card .ic { font-size: 1.9rem; line-height: 1; }
+    .ring-card b {
+      font-family: var(--font-head);
+      font-weight: 600;
+      font-size: 1.3rem;
+      color: var(--text);
+      display: block;
+    }
+    .ring-card span { font-size: 0.82rem; color: var(--text-dim); }
+
+    .dm-section { max-width: var(--max); margin: 0 auto; padding: 90px 28px 40px; }
+    .dm-section .eyebrow { color: var(--accent); }
+    .dm-section h3 { font-size: clamp(2rem, 5vw, 3.2rem); color: var(--text); }
+    .dm-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 46px;
+    }
+    .dm-item {
+      padding: 32px 28px;
+      border-radius: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      will-change: transform;
+      transition: transform 0.5s var(--ease), border-color 0.5s var(--ease);
+    }
+    .dm-item:hover {
+      transform: translateY(-6px);
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    }
+    .dm-item .ic { font-size: 1.6rem; }
+    .dm-item b {
+      display: block;
+      font-family: var(--font-head);
+      font-size: 1.4rem;
+      color: var(--text);
+      margin: 16px 0 8px;
+    }
+    .dm-item span { font-size: 0.92rem; color: var(--text-dim); }
+
+    .dm-stats {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 60px 28px 110px;
+      text-align: center;
+    }
+    .dm-stat { flex: 1 1 200px; max-width: 280px; }
+    .dm-stat b {
+      display: block;
+      font-family: var(--font-head);
+      font-size: 3rem;
+      line-height: 1;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .dm-stat span { font-size: 0.9rem; color: var(--text-dim); }
+
+    /* ============================================================
+       15. RESPONSIVE
        ============================================================ */
     @media (max-width: 900px) {
       .cap-grid,
       .demo-grid,
       .timeline,
-      .quote-grid { grid-template-columns: 1fr; }
+      .quote-grid,
+      .dm-grid { grid-template-columns: 1fr; }
+
+      .dm-section { padding: 64px 22px 30px; }
+      .dm-stats { padding: 44px 22px 80px; }
+      .dm-bar { padding: 16px 22px; }
 
       .capabilities,
       .testimonials { padding: 100px 0; }
@@ -757,7 +969,7 @@
 
       <div class="demo-grid">
         <!-- Restaurant -->
-        <article class="demo-card reveal" data-hover
+        <article class="demo-card reveal" data-hover data-demo="restaurant"
                  style="--accent:#E4572E; --accent-soft:rgba(228,87,46,0.20)">
           <div class="overlay"></div>
           <div class="demo-icon">🍽</div>
@@ -769,7 +981,7 @@
         </article>
 
         <!-- Medical Clinic -->
-        <article class="demo-card reveal" data-hover
+        <article class="demo-card reveal" data-hover data-demo="clinic"
                  style="--accent:#3FA7D6; --accent-soft:rgba(63,167,214,0.20)">
           <div class="overlay"></div>
           <div class="demo-icon">✚</div>
@@ -781,7 +993,7 @@
         </article>
 
         <!-- Boutique / Fashion -->
-        <article class="demo-card reveal" data-hover
+        <article class="demo-card reveal" data-hover data-demo="boutique"
                  style="--accent:#C879C4; --accent-soft:rgba(200,121,196,0.20)">
           <div class="overlay"></div>
           <div class="demo-icon">◈</div>
@@ -793,7 +1005,7 @@
         </article>
 
         <!-- Coaching Institute -->
-        <article class="demo-card reveal" data-hover
+        <article class="demo-card reveal" data-hover data-demo="coaching"
                  style="--accent:#5FBF77; --accent-soft:rgba(95,191,119,0.20)">
           <div class="overlay"></div>
           <div class="demo-icon">✎</div>
@@ -887,6 +1099,9 @@
     <div>Premium websites for Indian businesses.</div>
   </footer>
 
+  <!-- Industry demo mini-sites mount here (built on demand by JS) -->
+  <div id="demoRoot" aria-live="polite"></div>
+
   <!-- ============================================================
        SCRIPTS — GSAP + ScrollTrigger from CDN
        ============================================================ -->
@@ -913,6 +1128,19 @@
 
       const lerp = (a, b, n) => a + (b - a) * n;
 
+      // Shared hover-cursor scaling. initCursor() wires up the real setter;
+      // bindHover() attaches listeners to any [data-hover] element, including
+      // ones injected later (e.g. inside a demo modal). No-op on touch devices.
+      let hoverScale = () => {};
+      function bindHover(scope) {
+        scope.querySelectorAll("[data-hover]").forEach((el) => {
+          if (el.dataset.hoverBound) return;
+          el.dataset.hoverBound = "1";
+          el.addEventListener("mouseenter", () => hoverScale(1.9));
+          el.addEventListener("mouseleave", () => hoverScale(1));
+        });
+      }
+
       /* --------------------------------------------------------
          1. CUSTOM CURSOR — gold dot + trailing ring (rAF + lerp)
          -------------------------------------------------------- */
@@ -933,11 +1161,8 @@
           my = e.clientY;
         }, { passive: true });
 
-        // Scale cursor up on interactive elements.
-        document.querySelectorAll("[data-hover]").forEach((el) => {
-          el.addEventListener("mouseenter", () => (ringScaleTarget = 1.9));
-          el.addEventListener("mouseleave", () => (ringScaleTarget = 1));
-        });
+        // Expose the scale setter; bindHover() (called in init) does the wiring.
+        hoverScale = (v) => (ringScaleTarget = v);
 
         function render() {
           dx = lerp(dx, mx, 0.35);
@@ -1108,13 +1333,209 @@
       }
 
       /* --------------------------------------------------------
-         5. INIT
+         5. INDUSTRY DEMO MINI-SITES
+         Clicking a demo card opens a full-screen, 3D-animated example
+         site for that business type. All content is data-driven so
+         one builder handles every industry.
+         -------------------------------------------------------- */
+      const DEMOS = {
+        restaurant: {
+          accent: "#E4572E",
+          type: "Restaurant",
+          name: "Saffron Table",
+          tagline: "Modern Indian cuisine, plated like art and served like a celebration.",
+          cta: "Reserve a Table",
+          gridEyebrow: "The Menu",
+          gridTitle: "Signature plates",
+          items: [
+            { ic: "🍛", name: "Rogan Josh",     note: "Slow-cooked Kashmiri lamb" },
+            { ic: "🍗", name: "Butter Chicken",  note: "Tandoor-charred, silky tomato" },
+            { ic: "🦐", name: "Tandoori Prawns", note: "Coastal spice, clay-oven fire" },
+            { ic: "🫕", name: "Dal Makhani",     note: "Black lentils, twelve hours" },
+            { ic: "🧀", name: "Paneer Tikka",    note: "Smoked cottage cheese" },
+            { ic: "🍚", name: "Saffron Biryani", note: "Aged basmati, rose & saffron" },
+          ],
+          stats: [
+            { n: "4.9★",    l: "Across 2,300 diner reviews" },
+            { n: "12 yrs",  l: "Serving the city" },
+            { n: "Nightly", l: "Live tabla & sitar" },
+          ],
+        },
+        clinic: {
+          accent: "#3FA7D6",
+          type: "Medical Clinic",
+          name: "Prisha Care",
+          tagline: "Compassionate, modern healthcare for your whole family — close to home.",
+          cta: "Book an Appointment",
+          gridEyebrow: "Our Services",
+          gridTitle: "Care under one roof",
+          items: [
+            { ic: "🩺", name: "General Medicine", note: "Everyday health & check-ups" },
+            { ic: "🧒", name: "Pediatrics",       note: "Gentle care for little ones" },
+            { ic: "❤️", name: "Cardiology",       note: "Heart health & screening" },
+            { ic: "🔬", name: "Diagnostics",      note: "In-house lab & imaging" },
+            { ic: "🦷", name: "Dental",           note: "Preventive & cosmetic" },
+            { ic: "🧘", name: "Physiotherapy",    note: "Recovery & mobility" },
+          ],
+          stats: [
+            { n: "8am–9pm", l: "Open all seven days" },
+            { n: "25+",     l: "Specialist doctors" },
+            { n: "15 min",  l: "Average wait time" },
+          ],
+        },
+        boutique: {
+          accent: "#C879C4",
+          type: "Boutique & Fashion",
+          name: "Maison Rue",
+          tagline: "Considered, contemporary fashion for the modern wardrobe.",
+          cta: "Shop the Collection",
+          gridEyebrow: "New Arrivals",
+          gridTitle: "This season's edit",
+          items: [
+            { ic: "👗", name: "Evening Wear",    note: "Statement silhouettes" },
+            { ic: "🧵", name: "The Silk Edit",   note: "Hand-finished mulberry" },
+            { ic: "🧥", name: "Statement Coats", note: "Structured & timeless" },
+            { ic: "👜", name: "Accessories",     note: "Leather goods & scarves" },
+            { ic: "💍", name: "Fine Jewellery",  note: "Everyday heirlooms" },
+            { ic: "👠", name: "Footwear",        note: "Italian-made classics" },
+          ],
+          stats: [
+            { n: "New",       l: "Drops every fortnight" },
+            { n: "Free",      l: "Styling appointments" },
+            { n: "Pan-India", l: "Express delivery" },
+          ],
+        },
+        coaching: {
+          accent: "#5FBF77",
+          type: "Coaching Institute",
+          name: "Apex Academy",
+          tagline: "Where ambition meets expert guidance — results that speak for themselves.",
+          cta: "Enroll Now",
+          gridEyebrow: "Programs",
+          gridTitle: "Courses built to crack it",
+          items: [
+            { ic: "📐", name: "JEE Advanced", note: "Engineering entrance mastery" },
+            { ic: "🧬", name: "NEET",         note: "Medical entrance intensive" },
+            { ic: "📚", name: "Foundation",   note: "Classes 8–10 groundwork" },
+            { ic: "⚡", name: "Crash Course", note: "Focused final-lap revision" },
+            { ic: "🏆", name: "Olympiad",     note: "Competitive exam edge" },
+            { ic: "📝", name: "Test Series",  note: "Weekly mocks & analysis" },
+          ],
+          stats: [
+            { n: "98%",  l: "Students clear their target" },
+            { n: "400+", l: "Top-500 ranks in 5 years" },
+            { n: "1:15", l: "Mentor to student ratio" },
+          ],
+        },
+      };
+
+      let escHandler = null;
+
+      function openDemo(key) {
+        const d = DEMOS[key];
+        const root = document.getElementById("demoRoot");
+        if (!d || !root) return;
+
+        // Size the 3D ring to the viewport so it never overflows on phones.
+        const small = window.innerWidth < 720;
+        const cardW = small ? 150 : 190;
+        const cardH = small ? 170 : 230;
+        const radius = small ? 155 : 250;
+        const step = 360 / d.items.length;
+
+        const ring = d.items
+          .map((it, i) => `
+            <div class="ring-card"
+                 style="width:${cardW}px;height:${cardH}px;
+                        transform:rotateY(${i * step}deg) translateZ(${radius}px)">
+              <div class="ic">${it.ic}</div>
+              <div><b>${it.name}</b><span>${it.note}</span></div>
+            </div>`)
+          .join("");
+
+        const grid = d.items
+          .map((it) => `
+            <div class="dm-item">
+              <div class="ic">${it.ic}</div>
+              <b>${it.name}</b>
+              <span>${it.note}</span>
+            </div>`)
+          .join("");
+
+        const stats = d.stats
+          .map((s) => `<div class="dm-stat"><b>${s.n}</b><span>${s.l}</span></div>`)
+          .join("");
+
+        root.innerHTML = `
+          <div class="demo-modal" role="dialog" aria-modal="true"
+               aria-label="${d.name} demo site" style="--accent:${d.accent}">
+            <div class="dm-bar">
+              <div class="dm-badge">Aureal Demo · <b>${d.type}</b></div>
+              <button class="dm-close" type="button" data-hover aria-label="Close demo">✕</button>
+            </div>
+            <header class="dm-hero">
+              <span class="eyebrow">${d.type}</span>
+              <h2>${d.name}</h2>
+              <p class="dm-tag">${d.tagline}</p>
+              <button class="dm-cta" type="button" data-hover>${d.cta}</button>
+              <div class="dm-stage">
+                <div class="ring3d" style="width:${cardW}px;height:${cardH}px">${ring}</div>
+              </div>
+            </header>
+            <section class="dm-section">
+              <span class="eyebrow">${d.gridEyebrow}</span>
+              <h3>${d.gridTitle}</h3>
+              <div class="dm-grid">${grid}</div>
+            </section>
+            <div class="dm-stats">${stats}</div>
+          </div>`;
+
+        const modal = root.querySelector(".demo-modal");
+        document.body.classList.add("modal-open");
+        modal.scrollTop = 0;
+        // next frame -> trigger the CSS opacity transition
+        requestAnimationFrame(() => modal.classList.add("open"));
+        bindHover(modal);
+
+        // Graceful entrance for hero elements when GSAP is present.
+        if (typeof gsap !== "undefined" && !prefersReduced) {
+          gsap.from(modal.querySelectorAll(".dm-hero > *"), {
+            y: 34, opacity: 0, duration: 0.7, ease: "power3.out",
+            stagger: 0.09, delay: 0.12,
+          });
+        }
+
+        modal.querySelector(".dm-close").addEventListener("click", closeDemo);
+        escHandler = (e) => { if (e.key === "Escape") closeDemo(); };
+        document.addEventListener("keydown", escHandler);
+      }
+
+      function closeDemo() {
+        const root = document.getElementById("demoRoot");
+        const modal = root && root.querySelector(".demo-modal");
+        if (!modal) return;
+        modal.classList.remove("open");
+        document.body.classList.remove("modal-open");
+        if (escHandler) document.removeEventListener("keydown", escHandler);
+        setTimeout(() => { root.innerHTML = ""; }, 500);
+      }
+
+      function initDemos() {
+        document.querySelectorAll(".demo-card[data-demo]").forEach((card) => {
+          card.addEventListener("click", () => openDemo(card.getAttribute("data-demo")));
+        });
+      }
+
+      /* --------------------------------------------------------
+         6. INIT
          -------------------------------------------------------- */
       function init() {
         initCursor();
+        bindHover(document);
         initHeroTilt();
         initCardTilt();
         initScrollAnimations();
+        initDemos();
       }
 
       if (document.readyState === "loading") {
