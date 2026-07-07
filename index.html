@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Premium web development studio building fast, animated, mobile-first websites for Indian businesses." />
+  <title>Aureal — Websites That Work While You Sleep</title>
+
+  <!-- ============================================================
+       FONTS — Cormorant Garamond (headings) + Inter (body)
+       ============================================================ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    /* ============================================================
+       1. DESIGN TOKENS & RESET
+       ============================================================ */
+    :root {
+      --bg:        #0a0a0a;
+      --bg-soft:   #101010;
+      --bg-card:   #131313;
+      --text:      #f0f0f0;
+      --text-dim:  #9a9a9a;
+      --gold:      #C9A84C;
+      --gold-soft: rgba(201, 168, 76, 0.14);
+      --gold-line: rgba(201, 168, 76, 0.30);
+      --border:    rgba(240, 240, 240, 0.08);
+
+      --font-head: "Cormorant Garamond", Georgia, serif;
+      --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --max:  1180px;
+    }
+
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-weight: 300;
+      line-height: 1.65;
+      overflow-x: hidden;
+      /* Hide native cursor only where the custom cursor is active (desktop). */
+    }
+
+    body.custom-cursor-on,
+    body.custom-cursor-on a,
+    body.custom-cursor-on button {
+      cursor: none;
+    }
+
+    ::selection {
+      background: var(--gold);
+      color: #0a0a0a;
+    }
+
+    h1, h2, h3 {
+      font-family: var(--font-head);
+      font-weight: 500;
+      line-height: 1.08;
+      letter-spacing: -0.01em;
+    }
+
+    p { color: var(--text-dim); }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ============================================================
+       2. LAYOUT HELPERS
+       ============================================================ */
+    .wrap {
+      width: 100%;
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+
+    section {
+      position: relative;
+    }
+
+    .eyebrow {
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: 0.72rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 22px;
+      display: inline-block;
+    }
+
+    .section-title {
+      font-size: clamp(2.4rem, 5.2vw, 4.2rem);
+      color: var(--text);
+      max-width: 16ch;
+    }
+
+    .section-lead {
+      max-width: 46ch;
+      margin-top: 22px;
+      font-size: 1.05rem;
+    }
+
+    /* ============================================================
+       3. BUTTONS
+       ============================================================ */
+    .btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: 0.92rem;
+      letter-spacing: 0.04em;
+      padding: 17px 34px;
+      border-radius: 100px;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      background: transparent;
+      cursor: pointer;
+      overflow: hidden;
+      transition: color 0.5s var(--ease), border-color 0.5s var(--ease);
+      will-change: transform;
+    }
+
+    .btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--gold);
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 0.5s var(--ease);
+      z-index: -1;
+    }
+
+    .btn:hover { color: #0a0a0a; }
+    .btn:hover::before { transform: scaleX(1); }
+
+    .btn .arrow {
+      transition: transform 0.5s var(--ease);
+    }
+    .btn:hover .arrow { transform: translateX(5px); }
+
+    /* ============================================================
+       4. CUSTOM CURSOR
+       ============================================================ */
+    .cursor-dot,
+    .cursor-ring {
+      position: fixed;
+      top: 0;
+      left: 0;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      /* rAF drives position via transform for zero jitter. */
+      will-change: transform;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .cursor-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--gold);
+      margin: -4px 0 0 -4px;
+    }
+    .cursor-ring {
+      width: 46px;
+      height: 46px;
+      margin: -23px 0 0 -23px;
+      border: 1px solid var(--gold-line);
+    }
+    body.custom-cursor-on .cursor-dot,
+    body.custom-cursor-on .cursor-ring { opacity: 1; }
+
+    /* ============================================================
+       5. NAV
+       ============================================================ */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 26px 32px;
+      mix-blend-mode: difference;
+    }
+    .brand {
+      font-family: var(--font-head);
+      font-size: 1.55rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #fff;
+    }
+    .brand span { color: var(--gold); }
+    .nav-cta {
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    /* ============================================================
+       6. HERO
+       ============================================================ */
+    .hero {
+      min-height: 100svh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      /* perspective enables the 3D floating card tilt */
+      perspective: 1200px;
+      overflow: hidden;
+    }
+
+    /* Abstract CSS shapes — no stock imagery */
+    .hero-glow {
+      position: absolute;
+      width: 62vw;
+      height: 62vw;
+      max-width: 780px;
+      max-height: 780px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--gold-soft) 0%, transparent 62%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .hero-ring {
+      position: absolute;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .hero-ring.r1 { width: 520px; height: 520px; margin: -260px 0 0 -260px; }
+    .hero-ring.r2 { width: 820px; height: 820px; margin: -410px 0 0 -410px; }
+
+    .hero-card {
+      position: relative;
+      z-index: 2;
+      padding: 66px 54px;
+      border-radius: 20px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01));
+      border: 1px solid var(--border);
+      backdrop-filter: blur(3px);
+      max-width: 760px;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+    /* Inner elements get subtle depth via translateZ */
+    .hero-card > * { transform: translateZ(40px); }
+
+    .hero h1 {
+      font-size: clamp(2.7rem, 7vw, 5.6rem);
+      color: var(--text);
+    }
+    .hero h1 .accent { color: var(--gold); font-style: italic; }
+
+    .hero-sub {
+      margin: 28px auto 40px;
+      font-size: 1.15rem;
+      max-width: 40ch;
+      color: var(--text-dim);
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 34px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.68rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      z-index: 2;
+    }
+    .scroll-hint::after {
+      content: "";
+      display: block;
+      width: 1px;
+      height: 40px;
+      margin: 14px auto 0;
+      background: linear-gradient(var(--gold), transparent);
+      animation: scrollLine 2.2s var(--ease) infinite;
+    }
+    @keyframes scrollLine {
+      0%   { transform: scaleY(0); transform-origin: top; }
+      45%  { transform: scaleY(1); transform-origin: top; }
+      55%  { transform: scaleY(1); transform-origin: bottom; }
+      100% { transform: scaleY(0); transform-origin: bottom; }
+    }
+
+    /* ============================================================
+       7. CAPABILITIES
+       ============================================================ */
+    .capabilities { padding: 160px 0; }
+
+    .cap-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 26px;
+      margin-top: 74px;
+      perspective: 1400px;
+    }
+
+    .cap-card {
+      position: relative;
+      padding: 46px 38px 52px;
+      border-radius: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      transform-style: preserve-3d;
+      will-change: transform;
+      overflow: hidden;
+    }
+    .cap-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      border: 1px solid transparent;
+      transition: border-color 0.5s var(--ease);
+      pointer-events: none;
+    }
+    .cap-card:hover::after { border-color: var(--gold-line); }
+
+    .cap-index {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      color: var(--gold);
+      letter-spacing: 0.2em;
+    }
+    .cap-card h3 {
+      font-size: 1.9rem;
+      margin: 26px 0 14px;
+      color: var(--text);
+    }
+    .cap-card p { font-size: 0.96rem; }
+
+    .cap-mark {
+      width: 46px;
+      height: 46px;
+      margin-top: 40px;
+      border-radius: 12px;
+      background: var(--gold-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+      font-size: 1.3rem;
+    }
+
+    /* ============================================================
+       8. INDUSTRY DEMOS
+       ============================================================ */
+    .demos { padding: 120px 0 160px; }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 22px;
+      margin-top: 70px;
+      perspective: 1600px;
+    }
+
+    .demo-card {
+      position: relative;
+      aspect-ratio: 3 / 4;
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 30px 26px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transform-style: preserve-3d;
+      will-change: transform;
+      transition: transform 0.55s var(--ease), border-color 0.55s var(--ease),
+                  box-shadow 0.55s var(--ease);
+    }
+    /* Unique accent overlay per industry (set via inline --accent) */
+    .demo-card .overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(120% 90% at 50% 0%,
+                  var(--accent-soft) 0%, transparent 60%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+    .demo-card:hover {
+      transform: translateZ(50px) translateY(-8px);
+      border-color: var(--gold);
+      box-shadow: 0 30px 60px -30px rgba(0,0,0,0.9);
+    }
+
+    .demo-icon {
+      position: relative;
+      z-index: 2;
+      width: 58px;
+      height: 58px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.7rem;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 14%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+    }
+
+    .demo-meta { position: relative; z-index: 2; }
+    .demo-type {
+      font-size: 0.7rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+      display: block;
+    }
+    .demo-name {
+      font-family: var(--font-head);
+      font-size: 1.65rem;
+      color: var(--text);
+      line-height: 1.1;
+      margin-bottom: 22px;
+    }
+    .demo-preview {
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      color: var(--text);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      padding: 11px 20px;
+      border-radius: 100px;
+      cursor: pointer;
+      align-self: flex-start;
+      transition: background 0.4s var(--ease), color 0.4s var(--ease),
+                  border-color 0.4s var(--ease);
+    }
+    .demo-card:hover .demo-preview {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: #0a0a0a;
+    }
+
+    /* ============================================================
+       9. PROCESS / TIMELINE
+       ============================================================ */
+    .process { padding: 140px 0 170px; background: var(--bg-soft); }
+
+    .timeline {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 34px;
+      margin-top: 90px;
+    }
+    /* Connecting line that draws in on scroll */
+    .timeline-line {
+      position: absolute;
+      top: 26px;
+      left: 8%;
+      width: 84%;
+      height: 1px;
+      background: var(--gold-line);
+      transform: scaleX(0);
+      transform-origin: left center;
+      z-index: 0;
+    }
+
+    .step { position: relative; z-index: 1; }
+    .step-dot {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 1px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-size: 1.4rem;
+      color: var(--gold);
+      margin-bottom: 34px;
+    }
+    .step h3 {
+      font-size: 1.75rem;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+    .step p { font-size: 0.98rem; max-width: 32ch; }
+
+    /* ============================================================
+       10. TESTIMONIALS
+       ============================================================ */
+    .testimonials { padding: 150px 0; }
+
+    .quote-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px;
+      margin-top: 70px;
+    }
+    .quote-card {
+      padding: 52px 46px;
+      border-radius: 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+    }
+    .quote-mark {
+      font-family: var(--font-head);
+      font-size: 4rem;
+      line-height: 0.5;
+      color: var(--gold);
+      display: block;
+      margin-bottom: 26px;
+    }
+    .quote-card blockquote {
+      font-family: var(--font-head);
+      font-size: 1.55rem;
+      font-weight: 400;
+      color: var(--text);
+      line-height: 1.35;
+    }
+    .quote-author {
+      margin-top: 34px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .quote-avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: var(--gold-soft);
+      border: 1px solid var(--gold-line);
+      flex-shrink: 0;
+    }
+    .quote-author strong {
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: 0.95rem;
+      color: var(--text);
+      display: block;
+    }
+    .quote-author span { font-size: 0.82rem; color: var(--text-dim); }
+
+    /* ============================================================
+       11. CONTACT / CTA
+       ============================================================ */
+    .contact {
+      padding: 170px 0 180px;
+      text-align: center;
+      background:
+        radial-gradient(70% 120% at 50% 100%, var(--gold-soft) 0%, transparent 60%),
+        var(--bg);
+    }
+    .contact h2 {
+      font-size: clamp(2.6rem, 6vw, 5rem);
+      color: var(--text);
+      max-width: 18ch;
+      margin: 0 auto 46px;
+    }
+
+    .btn-glow {
+      font-size: 1.05rem;
+      padding: 22px 52px;
+      background: var(--gold);
+      color: #0a0a0a;
+      border: none;
+      border-radius: 100px;
+      font-family: var(--font-body);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      position: relative;
+      will-change: transform;
+      /* pulse animation on load */
+      animation: pulse 2.6s var(--ease) infinite;
+    }
+    .btn-glow::before { display: none; }
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(201,168,76,0.55); }
+      70%  { box-shadow: 0 0 0 26px rgba(201,168,76,0); }
+      100% { box-shadow: 0 0 0 0 rgba(201,168,76,0); }
+    }
+    .btn-glow .wa {
+      display: inline-block;
+      margin-right: 10px;
+      transform: translateY(1px);
+    }
+
+    .contact-note {
+      margin-top: 30px;
+      font-size: 0.86rem;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+    }
+
+    /* ============================================================
+       12. FOOTER (minimal, no credits/badges)
+       ============================================================ */
+    .foot {
+      padding: 44px 0;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      letter-spacing: 0.04em;
+    }
+
+    /* ============================================================
+       13. REVEAL BASE STATE (JS/GSAP animates to visible)
+       ============================================================ */
+    .reveal { opacity: 0; }
+
+    /* ============================================================
+       14. RESPONSIVE
+       ============================================================ */
+    @media (max-width: 900px) {
+      .cap-grid,
+      .demo-grid,
+      .timeline,
+      .quote-grid { grid-template-columns: 1fr; }
+
+      .capabilities,
+      .testimonials { padding: 100px 0; }
+      .demos { padding: 80px 0 110px; }
+      .process { padding: 100px 0 120px; }
+      .contact { padding: 120px 0 130px; }
+
+      .demo-card { aspect-ratio: auto; min-height: 280px; }
+
+      .timeline-line { display: none; } /* line is horizontal-only */
+
+      .hero-card { padding: 44px 28px; }
+      .hero-ring.r2 { display: none; }
+      .wrap { padding: 0 22px; }
+      .nav { padding: 20px 22px; }
+    }
+
+    /* Respect users who prefer reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .btn-glow { animation: none; }
+      .scroll-hint::after { animation: none; }
+      html { scroll-behavior: auto; }
+      .reveal { opacity: 1 !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Custom cursor elements (desktop only; hidden on touch) -->
+  <div class="cursor-ring" aria-hidden="true"></div>
+  <div class="cursor-dot" aria-hidden="true"></div>
+
+  <!-- ================= NAV ================= -->
+  <nav class="nav">
+    <div class="brand">Aureal<span>.</span></div>
+    <a href="#contact" class="nav-cta" data-hover>Start a Project</a>
+  </nav>
+
+  <!-- ================= HERO ================= -->
+  <header class="hero" id="top">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-ring r1" aria-hidden="true"></div>
+    <div class="hero-ring r2" aria-hidden="true"></div>
+
+    <div class="hero-card" id="heroCard">
+      <span class="eyebrow">Web Development Studio</span>
+      <h1>We Build Websites That <span class="accent">Work</span> While You Sleep.</h1>
+      <p class="hero-sub">Premium web solutions for Indian businesses.</p>
+      <a href="#capabilities" class="btn" data-hover>
+        See What We Can Build
+        <span class="arrow">→</span>
+      </a>
+    </div>
+
+    <div class="scroll-hint">Scroll</div>
+  </header>
+
+  <!-- ================= CAPABILITIES ================= -->
+  <section class="capabilities" id="capabilities">
+    <div class="wrap">
+      <span class="eyebrow reveal">What Sets Us Apart</span>
+      <h2 class="section-title reveal">Craftsmanship in every interaction.</h2>
+
+      <div class="cap-grid">
+        <!-- slides in from LEFT -->
+        <article class="cap-card tilt" data-cap="left" data-hover>
+          <span class="cap-index">01</span>
+          <h3>Animated &amp; Interactive</h3>
+          <p>Motion that guides attention and makes your brand feel alive — purposeful animation, never decoration.</p>
+          <div class="cap-mark">✦</div>
+        </article>
+
+        <!-- slides in from BOTTOM -->
+        <article class="cap-card tilt" data-cap="bottom" data-hover>
+          <span class="cap-index">02</span>
+          <h3>Mobile Optimized</h3>
+          <p>Designed for the phone first, where most of your customers actually are — flawless on every screen size.</p>
+          <div class="cap-mark">▢</div>
+        </article>
+
+        <!-- slides in from RIGHT -->
+        <article class="cap-card tilt" data-cap="right" data-hover>
+          <span class="cap-index">03</span>
+          <h3>Fast &amp; Lightweight</h3>
+          <p>Engineered to load instantly and stay smooth at 60fps, so visitors never wait and never leave.</p>
+          <div class="cap-mark">⚡</div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= INDUSTRY DEMOS ================= -->
+  <section class="demos" id="work">
+    <div class="wrap">
+      <span class="eyebrow reveal">Made For Your Industry</span>
+      <h2 class="section-title reveal">A glimpse of what your site could be.</h2>
+
+      <div class="demo-grid">
+        <!-- Restaurant -->
+        <article class="demo-card reveal" data-hover
+                 style="--accent:#E4572E; --accent-soft:rgba(228,87,46,0.20)">
+          <div class="overlay"></div>
+          <div class="demo-icon">🍽</div>
+          <div class="demo-meta">
+            <span class="demo-type">Restaurant</span>
+            <div class="demo-name">Saffron Table</div>
+            <button class="demo-preview" type="button" data-hover>Preview</button>
+          </div>
+        </article>
+
+        <!-- Medical Clinic -->
+        <article class="demo-card reveal" data-hover
+                 style="--accent:#3FA7D6; --accent-soft:rgba(63,167,214,0.20)">
+          <div class="overlay"></div>
+          <div class="demo-icon">✚</div>
+          <div class="demo-meta">
+            <span class="demo-type">Medical Clinic</span>
+            <div class="demo-name">Prisha Care</div>
+            <button class="demo-preview" type="button" data-hover>Preview</button>
+          </div>
+        </article>
+
+        <!-- Boutique / Fashion -->
+        <article class="demo-card reveal" data-hover
+                 style="--accent:#C879C4; --accent-soft:rgba(200,121,196,0.20)">
+          <div class="overlay"></div>
+          <div class="demo-icon">◈</div>
+          <div class="demo-meta">
+            <span class="demo-type">Boutique &amp; Fashion</span>
+            <div class="demo-name">Maison Rue</div>
+            <button class="demo-preview" type="button" data-hover>Preview</button>
+          </div>
+        </article>
+
+        <!-- Coaching Institute -->
+        <article class="demo-card reveal" data-hover
+                 style="--accent:#5FBF77; --accent-soft:rgba(95,191,119,0.20)">
+          <div class="overlay"></div>
+          <div class="demo-icon">✎</div>
+          <div class="demo-meta">
+            <span class="demo-type">Coaching Institute</span>
+            <div class="demo-name">Apex Academy</div>
+            <button class="demo-preview" type="button" data-hover>Preview</button>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PROCESS ================= -->
+  <section class="process" id="process">
+    <div class="wrap">
+      <span class="eyebrow reveal">How We Work</span>
+      <h2 class="section-title reveal">Three simple steps to launch.</h2>
+
+      <div class="timeline">
+        <div class="timeline-line" id="timelineLine"></div>
+
+        <article class="step reveal">
+          <div class="step-dot">1</div>
+          <h3>You Share Your Vision</h3>
+          <p>Tell us about your business and goals. We listen closely and map out exactly what your website needs to do.</p>
+        </article>
+
+        <article class="step reveal">
+          <div class="step-dot">2</div>
+          <h3>We Design &amp; Build</h3>
+          <p>We craft a custom, polished experience — designing, building, and refining every detail until it feels premium.</p>
+        </article>
+
+        <article class="step reveal">
+          <div class="step-dot">3</div>
+          <h3>You Launch &amp; Grow</h3>
+          <p>We handle the launch and hand you a fast, elegant site that works around the clock to bring in customers.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TESTIMONIALS ================= -->
+  <section class="testimonials" id="voices">
+    <div class="wrap">
+      <span class="eyebrow reveal">Client Voices</span>
+      <h2 class="section-title reveal">Work that speaks for itself.</h2>
+
+      <div class="quote-grid">
+        <figure class="quote-card reveal">
+          <span class="quote-mark">“</span>
+          <blockquote>Our bookings doubled within two months of launching. The site feels like it belongs to a brand ten times our size.</blockquote>
+          <figcaption class="quote-author">
+            <div class="quote-avatar"></div>
+            <div>
+              <strong>Ananya Mehta</strong>
+              <span>Owner, Saffron Table</span>
+            </div>
+          </figcaption>
+        </figure>
+
+        <figure class="quote-card reveal">
+          <span class="quote-mark">“</span>
+          <blockquote>They understood exactly what we needed and delivered something genuinely beautiful — and it loads instantly, even on my phone.</blockquote>
+          <figcaption class="quote-author">
+            <div class="quote-avatar"></div>
+            <div>
+              <strong>Rohan Iyer</strong>
+              <span>Director, Apex Academy</span>
+            </div>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONTACT / CTA ================= -->
+  <section class="contact" id="contact">
+    <div class="wrap">
+      <h2 class="reveal">Ready to get your business online?</h2>
+      <button class="btn-glow" type="button" data-hover>
+        <span class="wa">✆</span> WhatsApp Us
+      </button>
+      <p class="contact-note reveal">Typically replies within a few hours.</p>
+    </div>
+  </section>
+
+  <footer class="foot wrap">
+    <div class="brand" style="font-size:1.2rem">Aureal<span>.</span></div>
+    <div>Premium websites for Indian businesses.</div>
+  </footer>
+
+  <!-- ============================================================
+       SCRIPTS — GSAP + ScrollTrigger from CDN
+       ============================================================ -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <script>
+    /* ============================================================
+       Aureal — motion layer
+       Organised into: device detection, cursor, hero tilt, hover
+       tilt, and GSAP ScrollTrigger reveals.
+       Performance rules: transform/opacity only, will-change set in
+       CSS, rAF for pointer loops, and matchMedia to fully disable
+       pointer effects on touch / small screens.
+       ============================================================ */
+
+    (function () {
+      "use strict";
+
+      const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      // Pointer effects only where there is a fine pointer AND a wide screen.
+      const isDesktop = window.matchMedia("(pointer: fine)").matches &&
+                        window.innerWidth > 900;
+
+      const lerp = (a, b, n) => a + (b - a) * n;
+
+      /* --------------------------------------------------------
+         1. CUSTOM CURSOR — gold dot + trailing ring (rAF + lerp)
+         -------------------------------------------------------- */
+      function initCursor() {
+        if (!isDesktop) return;
+
+        const dot  = document.querySelector(".cursor-dot");
+        const ring = document.querySelector(".cursor-ring");
+        document.body.classList.add("custom-cursor-on");
+
+        // Target (raw mouse), dot (near-instant), ring (laggy trail).
+        let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+        let dx = mx, dy = my, rx = mx, ry = my;
+        let ringScale = 1, ringScaleTarget = 1;
+
+        window.addEventListener("mousemove", (e) => {
+          mx = e.clientX;
+          my = e.clientY;
+        }, { passive: true });
+
+        // Scale cursor up on interactive elements.
+        document.querySelectorAll("[data-hover]").forEach((el) => {
+          el.addEventListener("mouseenter", () => (ringScaleTarget = 1.9));
+          el.addEventListener("mouseleave", () => (ringScaleTarget = 1));
+        });
+
+        function render() {
+          dx = lerp(dx, mx, 0.35);
+          dy = lerp(dy, my, 0.35);
+          rx = lerp(rx, mx, 0.15);
+          ry = lerp(ry, my, 0.15);
+          ringScale = lerp(ringScale, ringScaleTarget, 0.15);
+
+          dot.style.transform  = `translate(${dx}px, ${dy}px)`;
+          ring.style.transform = `translate(${rx}px, ${ry}px) scale(${ringScale})`;
+
+          requestAnimationFrame(render);
+        }
+        requestAnimationFrame(render);
+      }
+
+      /* --------------------------------------------------------
+         2. HERO FLOATING CARD — smooth 3D tilt following mouse
+         -------------------------------------------------------- */
+      function initHeroTilt() {
+        if (!isDesktop) return;
+
+        const card = document.getElementById("heroCard");
+        if (!card) return;
+
+        let tx = 0, ty = 0, cx = 0, cy = 0; // target vs current rotation
+
+        window.addEventListener("mousemove", (e) => {
+          const nx = (e.clientX / window.innerWidth)  - 0.5; // -0.5 .. 0.5
+          const ny = (e.clientY / window.innerHeight) - 0.5;
+          tx = ny * -10; // rotateX
+          ty = nx *  12; // rotateY
+        }, { passive: true });
+
+        function render() {
+          cx = lerp(cx, tx, 0.07);
+          cy = lerp(cy, ty, 0.07);
+          card.style.transform =
+            `rotateX(${cx}deg) rotateY(${cy}deg) translateZ(0)`;
+          requestAnimationFrame(render);
+        }
+        requestAnimationFrame(render);
+      }
+
+      /* --------------------------------------------------------
+         3. CARD HOVER TILT — capability cards (mousemove -> tilt)
+         -------------------------------------------------------- */
+      function initCardTilt() {
+        if (!isDesktop) return;
+
+        document.querySelectorAll(".tilt").forEach((card) => {
+          card.addEventListener("mousemove", (e) => {
+            const r = card.getBoundingClientRect();
+            const nx = (e.clientX - r.left) / r.width  - 0.5;
+            const ny = (e.clientY - r.top)  / r.height - 0.5;
+            card.style.transform =
+              `rotateX(${ny * -8}deg) rotateY(${nx * 8}deg) translateZ(10px)`;
+          });
+          card.addEventListener("mouseleave", () => {
+            card.style.transform = "rotateX(0) rotateY(0) translateZ(0)";
+          });
+        });
+      }
+
+      /* --------------------------------------------------------
+         4. SCROLL REVEALS — GSAP ScrollTrigger
+         -------------------------------------------------------- */
+      function initScrollAnimations() {
+        if (typeof gsap === "undefined" || typeof ScrollTrigger === "undefined") {
+          // GSAP failed to load — show everything so nothing is hidden.
+          document.querySelectorAll(".reveal").forEach((el) => (el.style.opacity = 1));
+          return;
+        }
+        gsap.registerPlugin(ScrollTrigger);
+
+        if (prefersReduced) {
+          document.querySelectorAll(".reveal").forEach((el) => (el.style.opacity = 1));
+          return;
+        }
+
+        // Generic reveals: opacity 0 -> 1 + translateY 40 -> 0.
+        // Skip elements handled by the grid-stagger loop below so no two
+        // ScrollTriggers ever animate the same element's opacity.
+        gsap.utils.toArray(".reveal").forEach((el) => {
+          if (el.closest(".demo-grid, .quote-grid")) return;
+          gsap.fromTo(el,
+            { opacity: 0, y: 40 },
+            {
+              opacity: 1, y: 0, ease: "none",
+              scrollTrigger: {
+                trigger: el,
+                start: "top 88%",
+                end: "top 58%",
+                scrub: 1,
+              },
+            }
+          );
+        });
+
+        // Stagger sibling reveals inside grids by 0.15s using position offset.
+        gsap.utils.toArray(".quote-grid, .demo-grid").forEach((grid) => {
+          const items = grid.querySelectorAll(".reveal");
+          items.forEach((el, i) => {
+            gsap.fromTo(el,
+              { opacity: 0, y: 40, rotateX: 15 },
+              {
+                opacity: 1, y: 0, rotateX: 0, ease: "none",
+                scrollTrigger: {
+                  trigger: grid,
+                  start: () => `top ${80 - i * 4}%`,
+                  end:   () => `top ${52 - i * 4}%`,
+                  scrub: 1,
+                },
+              }
+            );
+          });
+        });
+
+        // Capability cards — slide in from left / bottom / right + 3D rotate.
+        const from = {
+          left:   { x: -90, y: 0,  rotateY:  18 },
+          bottom: { x: 0,   y: 90, rotateX:  18 },
+          right:  { x: 90,  y: 0,  rotateY: -18 },
+        };
+        gsap.utils.toArray(".cap-card").forEach((card, i) => {
+          const dir = card.getAttribute("data-cap") || "bottom";
+          gsap.fromTo(card,
+            Object.assign({ opacity: 0 }, from[dir]),
+            {
+              opacity: 1, x: 0, y: 0, rotateX: 0, rotateY: 0, ease: "none",
+              scrollTrigger: {
+                trigger: ".cap-grid",
+                start: () => `top ${82 - i * 6}%`,
+                end:   () => `top ${50 - i * 6}%`,
+                scrub: 1,
+              },
+            }
+          );
+        });
+
+        // Timeline connecting line draws in on scroll.
+        const line = document.getElementById("timelineLine");
+        if (line) {
+          gsap.fromTo(line,
+            { scaleX: 0 },
+            {
+              scaleX: 1, ease: "none",
+              scrollTrigger: {
+                trigger: ".timeline",
+                start: "top 78%",
+                end: "top 40%",
+                scrub: 1,
+              },
+            }
+          );
+        }
+
+        // Hero card gentle parallax lift as it scrolls away.
+        gsap.to(".hero-card", {
+          y: -60, ease: "none",
+          scrollTrigger: {
+            trigger: ".hero",
+            start: "top top",
+            end: "bottom top",
+            scrub: 1,
+          },
+        });
+      }
+
+      /* --------------------------------------------------------
+         5. INIT
+         -------------------------------------------------------- */
+      function init() {
+        initCursor();
+        initHeroTilt();
+        initCardTilt();
+        initScrollAnimations();
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+
+      // Recalculate ScrollTrigger positions on resize (debounced).
+      let rt;
+      window.addEventListener("resize", () => {
+        clearTimeout(rt);
+        rt = setTimeout(() => {
+          if (typeof ScrollTrigger !== "undefined") ScrollTrigger.refresh();
+        }, 200);
+      }, { passive: true });
+    })();
+  </script>
+</body>
+</html>
