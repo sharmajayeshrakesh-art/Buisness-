@@ -857,6 +857,162 @@
     }
     .dm-stat span { font-size: 0.9rem; color: var(--text-dim); }
 
+    /* ---- Richer demo content: about, features, gallery, quote, contact ---- */
+    .dm-about {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 40px 28px 10px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 46px;
+      align-items: center;
+    }
+    .dm-about .eyebrow { color: var(--accent); }
+    .dm-about h3 { font-size: clamp(1.9rem, 4.4vw, 2.9rem); color: var(--text); margin-bottom: 18px; }
+    .dm-about p { font-size: 1.02rem; line-height: 1.75; }
+    .dm-about .about-visual {
+      position: relative;
+      aspect-ratio: 4 / 3;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+      background:
+        radial-gradient(120% 120% at 20% 10%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 60%),
+        linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4.5rem;
+    }
+    .dm-about .about-visual::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(60% 60% at 70% 80%,
+                  color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%);
+    }
+
+    .dm-features {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 70px 28px 20px;
+    }
+    .dm-features .eyebrow { color: var(--accent); }
+    .dm-features h3 { font-size: clamp(1.9rem, 4.4vw, 2.9rem); color: var(--text); }
+    .dm-feat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 40px;
+    }
+    .dm-feat {
+      padding: 34px 28px;
+      border-radius: 16px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+      border: 1px solid var(--border);
+    }
+    .dm-feat .ic {
+      width: 52px; height: 52px; border-radius: 13px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; margin-bottom: 20px;
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 14%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    }
+    .dm-feat b { display: block; font-family: var(--font-head); font-size: 1.35rem; color: var(--text); margin-bottom: 8px; }
+    .dm-feat span { font-size: 0.95rem; color: var(--text-dim); }
+
+    .dm-gallery-wrap { max-width: var(--max); margin: 0 auto; padding: 70px 28px 20px; }
+    .dm-gallery-wrap .eyebrow { color: var(--accent); }
+    .dm-gallery-wrap h3 { font-size: clamp(1.9rem, 4.4vw, 2.9rem); color: var(--text); }
+    .dm-gallery {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 40px;
+    }
+    .dm-tile {
+      position: relative;
+      aspect-ratio: 3 / 4;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: linear-gradient(160deg,
+                  color-mix(in srgb, var(--accent) 22%, #131313),
+                  #0d0d0d);
+      display: flex;
+      align-items: flex-end;
+      padding: 16px;
+      font-size: 2.4rem;
+      transition: transform 0.5s var(--ease), border-color 0.5s var(--ease);
+    }
+    .dm-tile:nth-child(odd) { aspect-ratio: 3 / 3.4; }
+    .dm-tile span {
+      position: absolute;
+      left: 16px; bottom: 14px;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      color: var(--text);
+    }
+    .dm-tile .emoji { font-size: 2.2rem; line-height: 1; opacity: 0.9; }
+    .dm-tile:hover { transform: translateY(-6px); border-color: var(--accent); }
+
+    .dm-quote {
+      max-width: 860px;
+      margin: 40px auto 0;
+      padding: 80px 28px;
+      text-align: center;
+    }
+    .dm-quote .qmark {
+      font-family: var(--font-head);
+      font-size: 4rem; line-height: 0.4;
+      color: var(--accent);
+      display: block; margin-bottom: 28px;
+    }
+    .dm-quote blockquote {
+      font-family: var(--font-head);
+      font-size: clamp(1.5rem, 3.4vw, 2.2rem);
+      font-weight: 400;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .dm-quote .who { margin-top: 30px; font-size: 0.9rem; color: var(--text-dim); letter-spacing: 0.04em; }
+    .dm-quote .who b { color: var(--accent); font-weight: 600; }
+
+    .dm-contact {
+      position: relative;
+      text-align: center;
+      padding: 100px 28px 120px;
+      background:
+        radial-gradient(70% 120% at 50% 100%,
+          color-mix(in srgb, var(--accent) 18%, transparent) 0%, transparent 60%);
+    }
+    .dm-contact h3 { font-size: clamp(2rem, 5vw, 3.4rem); color: var(--text); max-width: 18ch; margin: 0 auto 20px; }
+    .dm-contact p { max-width: 46ch; margin: 0 auto 34px; }
+    .dm-contact-details {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px 40px;
+      margin-top: 40px;
+      font-size: 0.9rem;
+      color: var(--text-dim);
+    }
+    .dm-contact-details b { color: var(--text); font-weight: 500; }
+
+    /* Scroll-in reveal for modal sections (driven by IntersectionObserver
+       because the modal scrolls in its own container, not the window). */
+    .demo-modal .dm-reveal {
+      opacity: 0;
+      transform: translateY(34px);
+      transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+    }
+    .demo-modal .dm-reveal.in { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .demo-modal .dm-reveal { opacity: 1; transform: none; transition: none; }
+    }
+
     /* ============================================================
        15B. 3D BACKGROUND CANVAS (Three.js — scroll-driven object)
        ============================================================ */
@@ -973,17 +1129,34 @@
       .demo-grid,
       .timeline,
       .quote-grid,
-      .dm-grid { grid-template-columns: 1fr; }
+      .dm-grid,
+      .dm-about,
+      .dm-feat-grid { grid-template-columns: 1fr; }
 
+      /* Two-up gallery reads better than four on a phone */
+      .dm-gallery { grid-template-columns: repeat(2, 1fr); }
+      .dm-tile, .dm-tile:nth-child(odd) { aspect-ratio: 3 / 3.2; }
+
+      .dm-about { gap: 30px; padding: 30px 22px 6px; }
+      .dm-about .about-visual { aspect-ratio: 16 / 9; }
+      .dm-features, .dm-gallery-wrap { padding: 56px 22px 10px; }
+      .dm-quote { padding: 60px 22px; }
+      .dm-contact { padding: 80px 22px 100px; }
       .dm-section { padding: 64px 22px 30px; }
       .dm-stats { padding: 44px 22px 80px; }
       .dm-bar { padding: 16px 22px; }
 
+      /* More breathing room on mobile ("open-open") + let the 3D show through */
       .capabilities,
-      .testimonials { padding: 100px 0; }
-      .demos { padding: 80px 0 110px; }
-      .process { padding: 100px 0 120px; }
-      .contact { padding: 120px 0 130px; }
+      .testimonials { padding: 116px 0; }
+      .demos { padding: 96px 0 120px; }
+      .process { padding: 116px 0 130px; background: rgba(16, 16, 16, 0.82); }
+      .contact { padding: 130px 0 140px; }
+      .cap-grid { gap: 40px; margin-top: 60px; }
+      .demo-grid { gap: 34px; }
+      .quote-grid { gap: 34px; }
+      .timeline { gap: 54px; }
+      .section-title { font-size: clamp(2.2rem, 8vw, 3rem); }
 
       .demo-card { aspect-ratio: auto; min-height: 280px; }
 
@@ -1247,6 +1420,14 @@
 
       const lerp = (a, b, n) => a + (b - a) * n;
 
+      // Cache the max scroll distance. Reading scrollHeight forces a layout,
+      // so we compute it once and refresh only on resize/load — never inside
+      // the per-frame loops (that was the main scroll-jank culprit).
+      let scrollMax = 1;
+      function refreshScrollMax() {
+        scrollMax = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      }
+
       // Shared hover-cursor scaling. initCursor() wires up the real setter;
       // bindHover() attaches listeners to any [data-hover] element, including
       // ones injected later (e.g. inside a demo modal). No-op on touch devices.
@@ -1270,25 +1451,43 @@
         const ring = document.querySelector(".cursor-ring");
         document.body.classList.add("custom-cursor-on");
 
-        // Target (raw mouse), dot (near-instant), ring (laggy trail).
+        // Target (raw mouse), dot (near-instant), ring (elastic trail that
+        // is CLAMPED so it can never fully detach from the dot).
         let mx = window.innerWidth / 2, my = window.innerHeight / 2;
         let dx = mx, dy = my, rx = mx, ry = my;
-        let ringScale = 1, ringScaleTarget = 1;
+        let ringScale = 1, hoverTarget = 1;
+        let speed = 0;                 // smoothed pointer speed (px/frame)
+        const MAX_LAG = 42;            // ring never strays further than this from the dot
 
         window.addEventListener("mousemove", (e) => {
           mx = e.clientX;
           my = e.clientY;
         }, { passive: true });
 
-        // Expose the scale setter; bindHover() (called in init) does the wiring.
-        hoverScale = (v) => (ringScaleTarget = v);
+        // Expose the hover-scale setter; bindHover() does the wiring.
+        hoverScale = (v) => (hoverTarget = v);
 
         function render() {
-          dx = lerp(dx, mx, 0.35);
-          dy = lerp(dy, my, 0.35);
-          rx = lerp(rx, mx, 0.15);
-          ry = lerp(ry, my, 0.15);
-          ringScale = lerp(ringScale, ringScaleTarget, 0.15);
+          // Dot: very responsive so it sits right under the pointer.
+          dx = lerp(dx, mx, 0.5);
+          dy = lerp(dy, my, 0.5);
+
+          // Ring: softer follow for an elastic feel...
+          rx = lerp(rx, mx, 0.22);
+          ry = lerp(ry, my, 0.22);
+          // ...then clamp its offset from the dot so it always surrounds it.
+          let ox = rx - dx, oy = ry - dy;
+          const dist = Math.hypot(ox, oy);
+          if (dist > MAX_LAG) {
+            rx = dx + (ox / dist) * MAX_LAG;
+            ry = dy + (oy / dist) * MAX_LAG;
+          }
+
+          // Speed → radius: the faster you move, the wider the ring grows.
+          const instSpeed = Math.hypot(mx - dx, my - dy);
+          speed = lerp(speed, instSpeed, 0.2);
+          const speedScale = 1 + Math.min(speed * 0.03, 0.9); // cap the growth
+          ringScale = lerp(ringScale, hoverTarget * speedScale, 0.2);
 
           dot.style.transform  = `translate(${dx}px, ${dy}px)`;
           ring.style.transform = `translate(${rx}px, ${ry}px) scale(${ringScale})`;
@@ -1479,6 +1678,36 @@
             { n: "12 yrs",  l: "Serving the city" },
             { n: "Nightly", l: "Live tabla & sitar" },
           ],
+          aboutEyebrow: "Our Story",
+          aboutTitle: "A table set for celebration.",
+          aboutText: "Born from a family kitchen and three generations of recipes, Saffron Table brings the warmth of a home dinner to a candlelit dining room. Every dish is cooked to order over live fire, every spice ground fresh that morning — food that tastes like an occasion, whether it's a Tuesday or your anniversary.",
+          aboutIcon: "🕯️",
+          featEyebrow: "Why Dine With Us",
+          featTitle: "More than a meal.",
+          features: [
+            { ic: "🔥", name: "Live Fire Kitchen", note: "Charcoal tandoors and open flames you can watch from your table." },
+            { ic: "🌿", name: "Farm-Fresh Daily", note: "Produce sourced each morning from local growers — nothing frozen." },
+            { ic: "🥂", name: "Private Events", note: "Book the terrace for birthdays, sangeets and corporate evenings." },
+          ],
+          galleryEyebrow: "The Ambience",
+          galleryTitle: "Step inside.",
+          gallery: [
+            { ic: "🍽️", label: "The Dining Room" },
+            { ic: "🍷", label: "Cellar & Bar" },
+            { ic: "🌆", label: "Rooftop Terrace" },
+            { ic: "👨‍🍳", label: "Chef's Table" },
+          ],
+          quote: "The best Indian meal we've had in years — the lamb literally melted. It felt like a special occasion from the moment we walked in.",
+          quoteBy: "Ananya & Vikram",
+          quoteRole: "Anniversary dinner",
+          contactTitle: "Reserve your table tonight.",
+          contactText: "Walk-ins welcome, but weekends fill fast. Book online in seconds or give us a call.",
+          contactCta: "Book a Table",
+          contactDetails: [
+            { l: "Open", v: "Tue–Sun · 12pm–11pm" },
+            { l: "Call", v: "+91 98765 43210" },
+            { l: "Find us", v: "12 Church Street, Bengaluru" },
+          ],
         },
         clinic: {
           accent: "#3FA7D6",
@@ -1500,6 +1729,36 @@
             { n: "8am–9pm", l: "Open all seven days" },
             { n: "25+",     l: "Specialist doctors" },
             { n: "15 min",  l: "Average wait time" },
+          ],
+          aboutEyebrow: "About the Clinic",
+          aboutTitle: "Healthcare that feels human.",
+          aboutText: "Prisha Care was built on a simple idea: modern medicine shouldn't feel cold or rushed. Our doctors take the time to listen, our facilities are calm and spotless, and our digital records mean you're never repeating your history. From your first check-up to specialist care, one trusted team looks after your whole family.",
+          aboutIcon: "🩺",
+          featEyebrow: "Why Patients Choose Us",
+          featTitle: "Care you can count on.",
+          features: [
+            { ic: "📱", name: "Book in 30 Seconds", note: "Online scheduling with instant SMS reminders — no phone queues." },
+            { ic: "🧪", name: "In-House Lab", note: "Blood work, X-ray and reports under one roof, often same-day." },
+            { ic: "🛡️", name: "Cashless Insurance", note: "Direct billing with all major health insurers, hassle-free." },
+          ],
+          galleryEyebrow: "Our Facility",
+          galleryTitle: "A space designed to reassure.",
+          gallery: [
+            { ic: "🏥", label: "Reception" },
+            { ic: "🩻", label: "Imaging Suite" },
+            { ic: "🧑‍⚕️", label: "Consult Rooms" },
+            { ic: "💊", label: "Pharmacy" },
+          ],
+          quote: "The doctor actually listened, and I had my reports the same afternoon. Booking online for my parents is now effortless.",
+          quoteBy: "Meera Nair",
+          quoteRole: "Patient since 2021",
+          contactTitle: "Book your appointment today.",
+          contactText: "Same-day slots are often available. Reserve online or reach us on WhatsApp — we'll confirm within minutes.",
+          contactCta: "Book Appointment",
+          contactDetails: [
+            { l: "Open", v: "All week · 8am–9pm" },
+            { l: "Call", v: "+91 91234 56780" },
+            { l: "Find us", v: "MG Road, Pune" },
           ],
         },
         boutique: {
@@ -1523,6 +1782,36 @@
             { n: "Free",      l: "Styling appointments" },
             { n: "Pan-India", l: "Express delivery" },
           ],
+          aboutEyebrow: "The Atelier",
+          aboutTitle: "Fashion with a point of view.",
+          aboutText: "Maison Rue is a curated edit for people who dress with intention. We work with a small circle of ateliers and independent designers to bring you pieces made in limited runs — never mass-produced. Considered fabrics, honest craftsmanship, and silhouettes designed to outlast the season.",
+          aboutIcon: "🧵",
+          featEyebrow: "The Maison Difference",
+          featTitle: "Boutique service, online.",
+          features: [
+            { ic: "💬", name: "Personal Styling", note: "Free video or in-store sessions with a dedicated stylist." },
+            { ic: "🔁", name: "Easy 15-Day Returns", note: "Changed your mind? Free pickup and instant refunds." },
+            { ic: "✨", name: "Limited Editions", note: "Small-batch drops — once it's gone, it's gone for good." },
+          ],
+          galleryEyebrow: "Lookbook",
+          galleryTitle: "The autumn edit.",
+          gallery: [
+            { ic: "🧥", label: "Outerwear" },
+            { ic: "👗", label: "Occasion" },
+            { ic: "👜", label: "Accessories" },
+            { ic: "👠", label: "Footwear" },
+          ],
+          quote: "Every piece I've bought gets compliments. The styling call helped me build a wardrobe I actually reach for every day.",
+          quoteBy: "Isha Kapoor",
+          quoteRole: "Verified customer",
+          contactTitle: "Find your next signature piece.",
+          contactText: "Browse the collection online, or book a private styling appointment at our flagship store.",
+          contactCta: "Shop Now",
+          contactDetails: [
+            { l: "Store", v: "Mon–Sat · 11am–8pm" },
+            { l: "WhatsApp", v: "+91 90000 11223" },
+            { l: "Flagship", v: "Linking Road, Mumbai" },
+          ],
         },
         coaching: {
           accent: "#5FBF77",
@@ -1544,6 +1833,36 @@
             { n: "98%",  l: "Students clear their target" },
             { n: "400+", l: "Top-500 ranks in 5 years" },
             { n: "1:15", l: "Mentor to student ratio" },
+          ],
+          aboutEyebrow: "About Apex",
+          aboutTitle: "Mentors who've been there.",
+          aboutText: "Apex Academy was founded by top-100 rankers who wanted to teach the way they wished they'd been taught — with clarity, not cramming. Small batches, faculty who know every student by name, and a data-driven test system that shows exactly where you stand. We don't just prepare you for the exam; we build the discipline that carries you through it.",
+          aboutIcon: "🎓",
+          featEyebrow: "The Apex Method",
+          featTitle: "Built around the student.",
+          features: [
+            { ic: "📊", name: "Live Rank Tracking", note: "A personal dashboard showing your progress against toppers." },
+            { ic: "👩‍🏫", name: "Doubt Sessions Daily", note: "Never stay stuck — one-on-one help every single evening." },
+            { ic: "🎥", name: "Recorded Lectures", note: "Missed a class? Rewatch every session, anytime, on any device." },
+          ],
+          galleryEyebrow: "Campus Life",
+          galleryTitle: "Where focus feels good.",
+          gallery: [
+            { ic: "📚", label: "Study Halls" },
+            { ic: "🔬", label: "Science Labs" },
+            { ic: "💻", label: "Digital Library" },
+            { ic: "🏆", label: "Toppers' Wall" },
+          ],
+          quote: "The mock tests and rank dashboard kept me honest. I always knew what to fix next — and it showed on results day.",
+          quoteBy: "Aarav Sharma",
+          quoteRole: "AIR 212, JEE Advanced",
+          contactTitle: "Your rank starts here.",
+          contactText: "New batches begin monthly. Book a free counselling session and a sample class before you decide.",
+          contactCta: "Enroll Now",
+          contactDetails: [
+            { l: "Batches", v: "Weekday & weekend" },
+            { l: "Call", v: "+91 99887 66554" },
+            { l: "Campus", v: "Kota, Rajasthan" },
           ],
         },
       };
@@ -1661,6 +1980,27 @@
           .map((s) => `<div class="dm-stat"><b>${s.n}</b><span>${s.l}</span></div>`)
           .join("");
 
+        const features = (d.features || [])
+          .map((f) => `
+            <div class="dm-feat">
+              <div class="ic">${f.ic}</div>
+              <b>${f.name}</b>
+              <span>${f.note}</span>
+            </div>`)
+          .join("");
+
+        const gallery = (d.gallery || [])
+          .map((g) => `
+            <div class="dm-tile">
+              <span class="emoji">${g.ic}</span>
+              <span>${g.label}</span>
+            </div>`)
+          .join("");
+
+        const details = (d.contactDetails || [])
+          .map((c) => `<div>${c.l} · <b>${c.v}</b></div>`)
+          .join("");
+
         root.innerHTML = `
           <div class="demo-modal" role="dialog" aria-modal="true"
                aria-label="${d.name} demo site" style="--accent:${d.accent}">
@@ -1668,6 +2008,7 @@
               <div class="dm-badge">Aureal Demo · <b>${d.type}</b></div>
               <button class="dm-close" type="button" data-hover aria-label="Close demo">✕</button>
             </div>
+
             <header class="dm-hero">
               <span class="eyebrow">${d.type}</span>
               <h2>${d.name}</h2>
@@ -1678,12 +2019,48 @@
               </div>
               <div class="ring-hint"><span class="drag-ic">↔</span> Drag or use arrow keys to rotate</div>
             </header>
-            <section class="dm-section">
+
+            <section class="dm-about dm-reveal">
+              <div>
+                <span class="eyebrow">${d.aboutEyebrow || "About"}</span>
+                <h3>${d.aboutTitle || ""}</h3>
+                <p>${d.aboutText || ""}</p>
+              </div>
+              <div class="about-visual">${d.aboutIcon || "✦"}</div>
+            </section>
+
+            <section class="dm-section dm-reveal">
               <span class="eyebrow">${d.gridEyebrow}</span>
               <h3>${d.gridTitle}</h3>
               <div class="dm-grid">${grid}</div>
             </section>
-            <div class="dm-stats">${stats}</div>
+
+            <section class="dm-features dm-reveal">
+              <span class="eyebrow">${d.featEyebrow || "Why Us"}</span>
+              <h3>${d.featTitle || ""}</h3>
+              <div class="dm-feat-grid">${features}</div>
+            </section>
+
+            <div class="dm-stats dm-reveal">${stats}</div>
+
+            <section class="dm-gallery-wrap dm-reveal">
+              <span class="eyebrow">${d.galleryEyebrow || "Gallery"}</span>
+              <h3>${d.galleryTitle || ""}</h3>
+              <div class="dm-gallery">${gallery}</div>
+            </section>
+
+            <section class="dm-quote dm-reveal">
+              <span class="qmark">“</span>
+              <blockquote>${d.quote || ""}</blockquote>
+              <div class="who"><b>${d.quoteBy || ""}</b> — ${d.quoteRole || ""}</div>
+            </section>
+
+            <section class="dm-contact dm-reveal">
+              <h3>${d.contactTitle || d.cta}</h3>
+              <p>${d.contactText || ""}</p>
+              <button class="dm-cta" type="button" data-hover>${d.contactCta || d.cta}</button>
+              <div class="dm-contact-details">${details}</div>
+            </section>
           </div>`;
 
         const modal = root.querySelector(".demo-modal");
@@ -1695,6 +2072,26 @@
         requestAnimationFrame(() => modal.classList.add("open"));
         bindHover(modal);
         ringCleanup = initRingControl(modal);
+
+        // Reveal the richer sections as they scroll into view inside the modal.
+        // Scroll-position based (not IntersectionObserver) so a fast fling can
+        // never skip a section and leave it stuck invisible.
+        const reveals = modal.querySelectorAll(".dm-reveal");
+        if (prefersReduced) {
+          reveals.forEach((el) => el.classList.add("in"));
+        } else {
+          const revealOnScroll = () => {
+            const line = modal.clientHeight * 0.88;
+            reveals.forEach((el) => {
+              if (!el.classList.contains("in") &&
+                  el.getBoundingClientRect().top < line) {
+                el.classList.add("in");
+              }
+            });
+          };
+          modal.addEventListener("scroll", revealOnScroll, { passive: true });
+          revealOnScroll();
+        }
 
         // Graceful entrance for hero elements when GSAP is present.
         if (typeof gsap !== "undefined" && !prefersReduced) {
@@ -1740,17 +2137,23 @@
 
         const GOLD = 0xc9a84c;
         let width = window.innerWidth, height = window.innerHeight;
+        let isMobile = width < 768;
 
         let renderer;
         try {
-          renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+          renderer = new THREE.WebGLRenderer({
+            canvas, alpha: true, antialias: !isMobile, powerPreference: "high-performance",
+          });
         } catch (e) { return; } // no WebGL — bail gracefully
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        // Cap pixel ratio: full DPR fullscreen WebGL is what strains weaker
+        // laptop GPUs and starves the scroll thread. 1.5 looks crisp for far less cost.
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
         renderer.setSize(width, height);
 
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-        camera.position.z = 7;
+        // Pull the camera in a touch on phones so the crystal reads large & clear.
+        camera.position.z = isMobile ? 5.6 : 7;
 
         // The travelling crystal
         const group = new THREE.Group();
@@ -1761,19 +2164,21 @@
           geo,
           new THREE.MeshStandardMaterial({
             color: 0x141414, metalness: 0.65, roughness: 0.32,
-            flatShading: true, transparent: true, opacity: 0.85,
+            flatShading: true, transparent: true, opacity: isMobile ? 0.92 : 0.85,
           })
         );
         group.add(core);
 
         const wire = new THREE.LineSegments(
           new THREE.EdgesGeometry(geo),
-          new THREE.LineBasicMaterial({ color: GOLD, transparent: true, opacity: 0.55 })
+          new THREE.LineBasicMaterial({
+            color: GOLD, transparent: true, opacity: isMobile ? 0.75 : 0.55,
+          })
         );
         group.add(wire);
 
         // Floating particle field
-        const pCount = width < 768 ? 220 : 520;
+        const pCount = isMobile ? 180 : 480;
         const pGeo = new THREE.BufferGeometry();
         const pos = new Float32Array(pCount * 3);
         for (let i = 0; i < pCount; i++) {
@@ -1784,7 +2189,10 @@
         pGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
         const particles = new THREE.Points(
           pGeo,
-          new THREE.PointsMaterial({ color: GOLD, size: 0.035, transparent: true, opacity: 0.55 })
+          new THREE.PointsMaterial({
+            color: GOLD, size: isMobile ? 0.05 : 0.035, transparent: true,
+            opacity: isMobile ? 0.7 : 0.55,
+          })
         );
         scene.add(particles);
 
@@ -1795,6 +2203,11 @@
         const rim = new THREE.PointLight(0x88bbff, 1.0, 60);
         rim.position.set(-6, -3, 4); scene.add(rim);
 
+        // Bigger on phones so it's unmistakably visible; smaller travel range
+        // so it stays on-screen on narrow viewports.
+        const baseScale = isMobile ? 1.35 : 1;
+        const travelX   = isMobile ? 1.8 : 3.2;
+
         // Scroll + mouse state (smoothed)
         let scrollP = 0, mx = 0, my = 0, tmx = 0, tmy = 0;
         if (isDesktop) {
@@ -1803,16 +2216,23 @@
             tmy = e.clientY / height - 0.5;
           }, { passive: true });
         }
-        const scrollProgress = () => {
-          const max = document.documentElement.scrollHeight - window.innerHeight;
-          return max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
-        };
 
-        function frame() {
-          scrollP = lerp(scrollP, scrollProgress(), 0.06);
+        // Render at ~40fps instead of 60. The object is ambient background
+        // motion, so the eye barely notices — but it hands a big slice of the
+        // main thread back to scrolling, which is what was lagging.
+        let last = 0;
+        const minDelta = 1000 / 40;
+
+        function frame(now) {
+          requestAnimationFrame(frame);
+          if (document.hidden) return;
+          if (now - last < minDelta) return;
+          last = now;
+
+          scrollP = lerp(scrollP, Math.min(1, window.scrollY / scrollMax), 0.08);
           mx = lerp(mx, tmx, 0.05);
           my = lerp(my, tmy, 0.05);
-          const t = performance.now() * 0.001;
+          const t = now * 0.001;
 
           // Continuous spin + scroll adds turns; sine paths reverse direction.
           group.rotation.y = t * 0.15 + scrollP * Math.PI * 4;
@@ -1820,9 +2240,9 @@
           group.rotation.z = Math.sin(scrollP * Math.PI * 2) * 0.4;
 
           // Travel across the viewport, drifting down as the page advances.
-          group.position.x = Math.sin(scrollP * Math.PI * 2) * 3.2 + mx * 1.2;
+          group.position.x = Math.sin(scrollP * Math.PI * 2) * travelX + mx * 1.2;
           group.position.y = -scrollP * 2.4 + Math.sin(t * 0.5) * 0.12;
-          group.scale.setScalar(1 - scrollP * 0.35);
+          group.scale.setScalar(baseScale * (1 - scrollP * 0.3));
 
           particles.rotation.y = t * 0.02 + scrollP * 0.6;
           particles.position.y = scrollP * 1.5;
@@ -1832,7 +2252,6 @@
           camera.lookAt(0, 0, 0);
 
           renderer.render(scene, camera);
-          requestAnimationFrame(frame);
         }
 
         if (prefersReduced) {
@@ -1844,6 +2263,7 @@
 
         window.addEventListener("resize", () => {
           width = window.innerWidth; height = window.innerHeight;
+          isMobile = width < 768;
           camera.aspect = width / height;
           camera.updateProjectionMatrix();
           renderer.setSize(width, height);
@@ -1856,7 +2276,11 @@
          -------------------------------------------------------- */
       function initSmoothScroll() {
         if (prefersReduced || typeof Lenis === "undefined") return;
-        const lenis = new Lenis({ lerp: 0.1, smoothWheel: true, wheelMultiplier: 1 });
+        // Snappier than before: higher lerp + a touch more wheel travel so the
+        // page keeps up with the pointer instead of feeling floaty/laggy.
+        const lenis = new Lenis({
+          lerp: 0.14, smoothWheel: true, wheelMultiplier: 1.15, touchMultiplier: 1.6,
+        });
         document.documentElement.style.scrollBehavior = "auto";
 
         if (typeof gsap !== "undefined" && typeof ScrollTrigger !== "undefined") {
@@ -1888,12 +2312,10 @@
         const bar = document.getElementById("scrollProgress");
         if (!bar) return;
         const update = () => {
-          const max = document.documentElement.scrollHeight - window.innerHeight;
-          const p = max > 0 ? window.scrollY / max : 0;
+          const p = window.scrollY / scrollMax;   // scrollMax is cached — no reflow
           bar.style.transform = `scaleX(${Math.min(1, Math.max(0, p))})`;
         };
         window.addEventListener("scroll", update, { passive: true });
-        window.addEventListener("resize", update, { passive: true });
         update();
       }
 
@@ -1923,10 +2345,18 @@
         initCardTilt();
         initScrollAnimations();
         initDemos();
+        refreshScrollMax();
         init3D();
         initSmoothScroll();
         initScrollProgress();
         initMagnetic();
+
+        // Keep the cached scroll height fresh (layout can change after fonts,
+        // images, or a resize) without reading it every frame.
+        window.addEventListener("resize", refreshScrollMax, { passive: true });
+        window.addEventListener("load", refreshScrollMax);
+        setTimeout(refreshScrollMax, 600);
+        setTimeout(refreshScrollMax, 1800);
       }
 
       if (document.readyState === "loading") {
