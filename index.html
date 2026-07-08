@@ -941,21 +941,28 @@
                   color-mix(in srgb, var(--accent) 22%, #131313),
                   #0d0d0d);
       display: flex;
-      align-items: flex-end;
-      padding: 16px;
-      font-size: 2.4rem;
+      align-items: center;
+      justify-content: center;
       transition: transform 0.5s var(--ease), border-color 0.5s var(--ease);
     }
     .dm-tile:nth-child(odd) { aspect-ratio: 3 / 3.4; }
-    .dm-tile span {
-      position: absolute;
-      left: 16px; bottom: 14px;
-      font-family: var(--font-body);
-      font-size: 0.8rem;
-      letter-spacing: 0.04em;
-      color: var(--text);
+    /* Emoji sits centred; label lives in its own bottom bar — no overlap. */
+    .dm-tile .emoji {
+      font-size: 2.6rem;
+      line-height: 1;
+      opacity: 0.92;
+      transform: translateY(-10px);
     }
-    .dm-tile .emoji { font-size: 2.2rem; line-height: 1; opacity: 0.9; }
+    .dm-tile .label {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      padding: 12px 14px;
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      letter-spacing: 0.03em;
+      color: var(--text);
+      background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+    }
     .dm-tile:hover { transform: translateY(-6px); border-color: var(--accent); }
 
     .dm-quote {
@@ -1122,6 +1129,185 @@
     }
 
     /* ============================================================
+       15F. 3D & MOTION SHOWCASE (scroll-driven, sticky canvas)
+       ============================================================ */
+    .showcase {
+      position: relative;
+      height: 320vh;               /* tall -> gives scroll distance to animate */
+      z-index: 2;
+    }
+    .showcase-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #show3d {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    .showcase-scrim {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: radial-gradient(120% 90% at 50% 50%, transparent 40%, var(--bg) 92%);
+    }
+    .showcase-copy {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 0 24px;
+      max-width: 720px;
+      pointer-events: none;         /* let drags reach the canvas */
+    }
+    .showcase-copy .eyebrow { color: var(--gold); }
+    .showcase-head {
+      font-size: clamp(2.2rem, 6vw, 4.4rem);
+      color: var(--text);
+      margin-bottom: 26px;
+    }
+    .showcase-steps { position: relative; height: 4.4em; margin: 0 auto; max-width: 40ch; }
+    .showcase-step {
+      position: absolute;
+      inset: 0;
+      font-size: 1.08rem;
+      color: var(--text-dim);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(12px);
+      transition: opacity 0.45s var(--ease), transform 0.45s var(--ease),
+                  visibility 0s linear 0.45s;
+    }
+    .showcase-step.active {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      transition: opacity 0.45s var(--ease), transform 0.45s var(--ease),
+                  visibility 0s linear 0s;
+    }
+    .showcase-hint {
+      margin-top: 40px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .showcase-hint .drag-ic { color: var(--gold); animation: nudge 2.4s var(--ease) infinite; }
+
+    /* ============================================================
+       15G. INTERACTIVE PLAYGROUND
+       ============================================================ */
+    .playground { position: relative; padding: 150px 0 160px; z-index: 2; }
+    .play-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 66px;
+      perspective: 1200px;
+    }
+    .play-card {
+      position: relative;
+      min-height: 300px;
+      border-radius: 20px;
+      overflow: hidden;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 40px 36px;
+      display: flex;
+      transform-style: preserve-3d;
+      transition: border-color 0.5s var(--ease), transform 0.35s var(--ease);
+    }
+    .play-card:hover { border-color: var(--gold-line); }
+    .play-body { position: relative; z-index: 2; align-self: flex-end; transform: translateZ(40px); }
+    .play-ic {
+      width: 56px; height: 56px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem;
+      background: var(--gold-soft);
+      border: 1px solid var(--gold-line);
+      margin-bottom: 26px;
+    }
+    .play-card h3 { font-size: 1.7rem; color: var(--text); margin-bottom: 10px; }
+    .play-card p { font-size: 0.96rem; max-width: 34ch; }
+    .play-tag {
+      display: inline-block;
+      margin-top: 22px;
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    /* Cursor spotlight card */
+    .play-spot {
+      position: absolute;
+      width: 340px; height: 340px;
+      left: 0; top: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--gold-soft) 0%, transparent 62%);
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: opacity 0.4s var(--ease);
+      pointer-events: none;
+      z-index: 1;
+      will-change: transform;
+    }
+    #playSpotlight:hover .play-spot { opacity: 1; }
+
+    /* Magnetic button */
+    .play-magnet {
+      margin-top: 22px;
+      padding: 14px 30px;
+      border-radius: 100px;
+      border: 1px solid var(--gold);
+      background: transparent;
+      color: var(--gold);
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      will-change: transform;
+      transition: background 0.4s var(--ease), color 0.4s var(--ease);
+    }
+    .play-magnet:hover { background: var(--gold); color: #0a0a0a; }
+
+    /* Draggable dial */
+    .play-dial-wrap { margin-top: 24px; }
+    .play-dial {
+      width: 92px; height: 92px;
+      border-radius: 50%;
+      border: 1px solid var(--gold-line);
+      background:
+        radial-gradient(circle at 50% 50%, var(--gold-soft), transparent 70%),
+        var(--bg-soft);
+      position: relative;
+      cursor: grab;
+      touch-action: none;
+      will-change: transform;
+    }
+    .play-dial:active { cursor: grabbing; }
+    .play-dial-mark {
+      position: absolute;
+      top: 8px; left: 50%;
+      width: 6px; height: 20px;
+      margin-left: -3px;
+      border-radius: 3px;
+      background: var(--gold);
+    }
+
+    /* ============================================================
        15. RESPONSIVE
        ============================================================ */
     @media (max-width: 900px) {
@@ -1131,7 +1317,13 @@
       .quote-grid,
       .dm-grid,
       .dm-about,
-      .dm-feat-grid { grid-template-columns: 1fr; }
+      .dm-feat-grid,
+      .play-grid { grid-template-columns: 1fr; }
+
+      /* Shorter scroll-run for the 3D showcase on phones */
+      .showcase { height: 260vh; }
+      .playground { padding: 110px 0 120px; }
+      .play-card { min-height: 260px; padding: 32px 26px; }
 
       /* Two-up gallery reads better than four on a phone */
       .dm-gallery { grid-template-columns: repeat(2, 1fr); }
@@ -1245,6 +1437,81 @@
           <h3>Fast &amp; Lightweight</h3>
           <p>Engineered to load instantly and stay smooth at 60fps, so visitors never wait and never leave.</p>
           <div class="cap-mark">⚡</div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3D & MOTION SHOWCASE (scroll-driven) ================= -->
+  <section class="showcase" id="motion">
+    <div class="showcase-sticky">
+      <canvas id="show3d" aria-hidden="true"></canvas>
+      <div class="showcase-scrim" aria-hidden="true"></div>
+      <div class="showcase-copy">
+        <span class="eyebrow">3D &amp; Motion</span>
+        <h2 class="showcase-head">Objects that move as you scroll.</h2>
+        <div class="showcase-steps">
+          <p class="showcase-step" data-step="0">Real 3D geometry rendered live in the browser — no video, no images.</p>
+          <p class="showcase-step" data-step="1">It spins, travels and changes direction the moment you scroll.</p>
+          <p class="showcase-step" data-step="2">Grab it — drag to spin it yourself. Motion your customers can feel.</p>
+        </div>
+        <div class="showcase-hint"><span class="drag-ic">↔</span> Drag the shape · scroll to animate</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= INTERACTIVE PLAYGROUND ================= -->
+  <section class="playground" id="interactive">
+    <div class="wrap">
+      <span class="eyebrow reveal">Interactive By Design</span>
+      <h2 class="section-title reveal">Things your visitors can play with.</h2>
+      <p class="section-lead reveal">Every element below is live — hover, move and drag them. This is the kind of interactivity we build into your site.</p>
+
+      <div class="play-grid">
+        <!-- 1. Cursor-follow spotlight -->
+        <article class="play-card reveal" id="playSpotlight" data-hover>
+          <div class="play-spot" aria-hidden="true"></div>
+          <div class="play-body">
+            <div class="play-ic">✦</div>
+            <h3>Cursor Spotlight</h3>
+            <p>A glow that follows the pointer across the surface.</p>
+            <span class="play-tag">Move your mouse over me</span>
+          </div>
+        </article>
+
+        <!-- 2. 3D tilt card -->
+        <article class="play-card play-tilt reveal" id="playTilt" data-hover>
+          <div class="play-body">
+            <div class="play-ic">🧊</div>
+            <h3>3D Tilt</h3>
+            <p>A card that leans in 3D toward your cursor with depth.</p>
+            <span class="play-tag">Hover to tilt</span>
+          </div>
+        </article>
+
+        <!-- 3. Magnetic button -->
+        <article class="play-card reveal" data-hover>
+          <div class="play-body">
+            <div class="play-ic">🧲</div>
+            <h3>Magnetic Pull</h3>
+            <p>Buttons that reach toward the cursor to invite the click.</p>
+            <button class="play-magnet" id="playMagnet" type="button">Pull me</button>
+          </div>
+        </article>
+
+        <!-- 4. Draggable spinner -->
+        <article class="play-card reveal" data-hover>
+          <div class="play-body">
+            <div class="play-ic">🎛️</div>
+            <h3>Drag to Spin</h3>
+            <p>Physical, momentum-based controls that respond to a flick.</p>
+            <div class="play-dial-wrap">
+              <div class="play-dial" id="playDial" aria-hidden="true">
+                <span class="play-dial-mark"></span>
+              </div>
+            </div>
+            <span class="play-tag">Drag the dial</span>
+          </div>
         </article>
       </div>
     </div>
@@ -1427,6 +1694,10 @@
       function refreshScrollMax() {
         scrollMax = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
       }
+
+      // The 3D & Motion showcase fully covers the background crystal while it
+      // is on screen, so we pause that render to keep everything smooth.
+      let bg3dPaused = false;
 
       // Shared hover-cursor scaling. initCursor() wires up the real setter;
       // bindHover() attaches listeners to any [data-hover] element, including
@@ -1993,7 +2264,7 @@
           .map((g) => `
             <div class="dm-tile">
               <span class="emoji">${g.ic}</span>
-              <span>${g.label}</span>
+              <span class="label">${g.label}</span>
             </div>`)
           .join("");
 
@@ -2225,7 +2496,7 @@
 
         function frame(now) {
           requestAnimationFrame(frame);
-          if (document.hidden) return;
+          if (document.hidden || bg3dPaused) return;
           if (now - last < minDelta) return;
           last = now;
 
@@ -2336,6 +2607,225 @@
       }
 
       /* --------------------------------------------------------
+         11. 3D & MOTION SHOWCASE — a dedicated scroll-driven scene
+         with its own object that spins/travels as you scroll AND
+         can be grabbed and dragged. This is the "hero" proof that
+         we build real 3D motion for the web.
+         -------------------------------------------------------- */
+      function initShowcase3D() {
+        const canvas = document.getElementById("show3d");
+        const section = document.getElementById("motion");
+        if (!canvas || !section || typeof THREE === "undefined") return;
+
+        let width = section.clientWidth || window.innerWidth;
+        let height = window.innerHeight;
+
+        let renderer;
+        try {
+          renderer = new THREE.WebGLRenderer({
+            canvas, alpha: true, antialias: window.innerWidth >= 768,
+            powerPreference: "high-performance",
+          });
+        } catch (e) { return; }
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+        renderer.setSize(width, height);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+        camera.position.z = 6;
+
+        const group = new THREE.Group();
+        scene.add(group);
+
+        const geo = new THREE.IcosahedronGeometry(1.9, 1);
+        const solid = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+          color: 0x0f0f0f, metalness: 0.7, roughness: 0.25,
+          flatShading: true, transparent: true, opacity: 0.92,
+        }));
+        const wire = new THREE.LineSegments(
+          new THREE.EdgesGeometry(geo),
+          new THREE.LineBasicMaterial({ color: 0xc9a84c, transparent: true, opacity: 0.8 })
+        );
+        group.add(solid, wire);
+
+        // A thin orbiting ring for extra depth/motion.
+        const ring = new THREE.Mesh(
+          new THREE.TorusGeometry(3, 0.015, 8, 140),
+          new THREE.MeshBasicMaterial({ color: 0xc9a84c, transparent: true, opacity: 0.35 })
+        );
+        ring.rotation.x = Math.PI / 2.2;
+        group.add(ring);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+        const key = new THREE.PointLight(0xc9a84c, 2.4, 60); key.position.set(5, 5, 7); scene.add(key);
+        const rim = new THREE.PointLight(0x88bbff, 1.2, 60); rim.position.set(-6, -2, 4); scene.add(rim);
+
+        // Scroll progress (ScrollTrigger if present, else manual), plus drag + mouse.
+        let progress = 0, targetProgress = 0;
+        let dragAngle = 0, dragVel = 0, dragging = false, lastX = 0;
+        let mx = 0, my = 0, tmx = 0, tmy = 0;
+
+        if (typeof ScrollTrigger !== "undefined") {
+          ScrollTrigger.create({
+            trigger: section, start: "top top", end: "bottom bottom",
+            onUpdate: (self) => { targetProgress = self.progress; },
+          });
+        }
+        const manualProgress = () => {
+          const total = section.offsetHeight - window.innerHeight;
+          return total > 0
+            ? Math.min(1, Math.max(0, -section.getBoundingClientRect().top / total))
+            : 0;
+        };
+
+        const steps = section.querySelectorAll(".showcase-step");
+        const setStep = (p) => {
+          const idx = p < 0.4 ? 0 : p < 0.72 ? 1 : 2;
+          steps.forEach((s, i) => s.classList.toggle("active", i === idx));
+        };
+        setStep(0);
+
+        // Grab-to-spin on the canvas itself.
+        canvas.style.cursor = "grab";
+        canvas.addEventListener("pointerdown", (e) => {
+          dragging = true; dragVel = 0; lastX = e.clientX;
+          canvas.style.cursor = "grabbing";
+          canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId);
+        });
+        window.addEventListener("pointermove", (e) => {
+          if (isDesktop) {
+            tmx = e.clientX / window.innerWidth - 0.5;
+            tmy = e.clientY / window.innerHeight - 0.5;
+          }
+          if (!dragging) return;
+          const dx = e.clientX - lastX; lastX = e.clientX;
+          dragAngle += dx * 0.01; dragVel = dx * 0.01;
+        }, { passive: true });
+        const release = () => { if (dragging) { dragging = false; canvas.style.cursor = "grab"; } };
+        window.addEventListener("pointerup", release);
+        window.addEventListener("pointercancel", release);
+
+        let last = 0; const minDelta = 1000 / 40;
+        function frame(now) {
+          requestAnimationFrame(frame);
+          if (document.hidden) return;
+          if (now - last < minDelta) return;
+          last = now;
+
+          if (typeof ScrollTrigger === "undefined") targetProgress = manualProgress();
+          progress = lerp(progress, targetProgress, 0.1);
+          mx = lerp(mx, tmx, 0.05); my = lerp(my, tmy, 0.05);
+          if (!dragging) { dragAngle += dragVel; dragVel *= 0.94; }
+          setStep(progress);
+
+          const t = now * 0.001;
+          group.rotation.y = progress * Math.PI * 3 + dragAngle + t * 0.05;
+          group.rotation.x = Math.sin(progress * Math.PI * 2) * 0.5 + my * 0.5;
+          group.rotation.z = progress * 0.6;
+          group.position.x = Math.sin(progress * Math.PI * 2) * 1.2 + mx * 0.6;
+          group.scale.setScalar(0.82 + progress * 0.5);
+          ring.rotation.z = t * 0.1 + progress * 2;
+
+          camera.lookAt(0, 0, 0);
+          renderer.render(scene, camera);
+        }
+        if (prefersReduced) { setStep(0.5); renderer.render(scene, camera); }
+        else requestAnimationFrame(frame);
+
+        // Pause the background crystal while this section is on screen.
+        if ("IntersectionObserver" in window) {
+          const io = new IntersectionObserver(
+            (ents) => ents.forEach((en) => { bg3dPaused = en.isIntersecting; }),
+            { threshold: 0.01 }
+          );
+          io.observe(section.querySelector(".showcase-sticky"));
+        }
+
+        window.addEventListener("resize", () => {
+          width = section.clientWidth || window.innerWidth;
+          height = window.innerHeight;
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix();
+          renderer.setSize(width, height);
+        }, { passive: true });
+      }
+
+      /* --------------------------------------------------------
+         12. INTERACTIVE PLAYGROUND — hands-on widgets: a cursor
+         spotlight, a 3D tilt card, a magnetic button and a
+         momentum dial the visitor can flick.
+         -------------------------------------------------------- */
+      function initPlayground() {
+        // Cursor spotlight
+        const spotCard = document.getElementById("playSpotlight");
+        if (spotCard) {
+          const spot = spotCard.querySelector(".play-spot");
+          spotCard.addEventListener("pointermove", (e) => {
+            const r = spotCard.getBoundingClientRect();
+            spot.style.transform =
+              `translate(${e.clientX - r.left}px, ${e.clientY - r.top}px) translate(-50%, -50%)`;
+          });
+        }
+
+        // 3D tilt card
+        const tilt = document.getElementById("playTilt");
+        if (tilt && isDesktop) {
+          tilt.addEventListener("pointermove", (e) => {
+            const r = tilt.getBoundingClientRect();
+            const nx = (e.clientX - r.left) / r.width - 0.5;
+            const ny = (e.clientY - r.top) / r.height - 0.5;
+            tilt.style.transform = `rotateX(${ny * -12}deg) rotateY(${nx * 14}deg)`;
+          });
+          tilt.addEventListener("pointerleave", () => { tilt.style.transform = ""; });
+        }
+
+        // Magnetic button
+        const mag = document.getElementById("playMagnet");
+        if (mag && isDesktop) {
+          const wrap = mag.closest(".play-card");
+          wrap.addEventListener("pointermove", (e) => {
+            const r = mag.getBoundingClientRect();
+            const x = e.clientX - (r.left + r.width / 2);
+            const y = e.clientY - (r.top + r.height / 2);
+            mag.style.transform = `translate(${x * 0.4}px, ${y * 0.5}px)`;
+          });
+          wrap.addEventListener("pointerleave", () => { mag.style.transform = ""; });
+        }
+
+        // Momentum dial (rotary drag + inertia)
+        const dial = document.getElementById("playDial");
+        if (dial) {
+          let ang = 0, vel = 0, dragging = false, startAng = 0, startPointer = 0;
+          const centre = () => {
+            const r = dial.getBoundingClientRect();
+            return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+          };
+          dial.addEventListener("pointerdown", (e) => {
+            dragging = true; vel = 0;
+            const c = centre();
+            startPointer = Math.atan2(e.clientY - c.y, e.clientX - c.x);
+            startAng = ang;
+            dial.setPointerCapture && dial.setPointerCapture(e.pointerId);
+          });
+          dial.addEventListener("pointermove", (e) => {
+            if (!dragging) return;
+            const c = centre();
+            const a = Math.atan2(e.clientY - c.y, e.clientX - c.x);
+            const na = startAng + (a - startPointer) * 180 / Math.PI;
+            vel = na - ang; ang = na;
+          });
+          const up = () => { dragging = false; };
+          dial.addEventListener("pointerup", up);
+          dial.addEventListener("pointercancel", up);
+          (function tick() {
+            if (!dragging && Math.abs(vel) > 0.05) { ang += vel; vel *= 0.95; }
+            dial.style.transform = `rotate(${ang}deg)`;
+            requestAnimationFrame(tick);
+          })();
+        }
+      }
+
+      /* --------------------------------------------------------
          10. INIT
          -------------------------------------------------------- */
       function init() {
@@ -2348,6 +2838,8 @@
         refreshScrollMax();
         init3D();
         initSmoothScroll();
+        initShowcase3D();
+        initPlayground();
         initScrollProgress();
         initMagnetic();
 
