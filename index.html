@@ -207,7 +207,8 @@
       align-items: center;
       justify-content: space-between;
       padding: 26px 32px;
-      mix-blend-mode: difference;
+      /* NOTE: mix-blend-mode removed — it forces a full-viewport recomposite
+         on every scroll frame and was a major scroll-jank source. */
     }
     .brand {
       font-family: var(--font-head);
@@ -271,9 +272,10 @@
       z-index: 2;
       padding: 66px 54px;
       border-radius: 20px;
-      background: linear-gradient(160deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01));
+      /* Slightly stronger tint replaces the removed backdrop blur (blur
+         re-computes every scroll frame — expensive). */
+      background: linear-gradient(160deg, rgba(12,12,14,0.34), rgba(12,12,14,0.14));
       border: 1px solid var(--border);
-      backdrop-filter: blur(3px);
       max-width: 760px;
       transform-style: preserve-3d;
       will-change: transform;
@@ -678,8 +680,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 20px 28px;
-      background: linear-gradient(#070707ee, #07070700);
-      backdrop-filter: blur(6px);
+      background: linear-gradient(#070707f5, #070707cc);
     }
     .dm-badge {
       font-size: 0.72rem;
@@ -1041,7 +1042,8 @@
       z-index: 1;             /* above the world canvas, below content (z-index 2) */
       pointer-events: none;
       transition: background 0.6s linear;
-      mix-blend-mode: screen; /* tints light areas, keeps darks clean */
+      /* mix-blend-mode removed for scroll performance — the radial vignette
+         reads fine with normal blending. */
     }
 
     /* Keep foreground content above the canvas */
@@ -4153,46 +4155,27 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
           return;
         }
 
-        // Generic reveals: opacity 0 -> 1 + translateY 40 -> 0.
-        // Skip elements handled by the grid-stagger loop below so no two
-        // ScrollTriggers ever animate the same element's opacity.
+        // Generic reveals — ONE-SHOT (play once on enter, then the trigger
+        // self-destructs). No scrub = zero per-scroll-frame work.
         gsap.utils.toArray(".reveal").forEach((el) => {
           if (el.closest(".demo-grid, .quote-grid")) return;
           if (el.matches(".section-title")) return; // char-revealed separately
-          gsap.fromTo(el,
-            { opacity: 0, y: 40 },
-            {
-              opacity: 1, y: 0, ease: "none",
-              scrollTrigger: {
-                trigger: el,
-                start: "top 88%",
-                end: "top 58%",
-                scrub: 1,
-              },
-            }
-          );
-        });
-
-        // Stagger sibling reveals inside grids by 0.15s using position offset.
-        gsap.utils.toArray(".quote-grid, .demo-grid").forEach((grid) => {
-          const items = grid.querySelectorAll(".reveal");
-          items.forEach((el, i) => {
-            gsap.fromTo(el,
-              { opacity: 0, y: 40, rotateX: 15 },
-              {
-                opacity: 1, y: 0, rotateX: 0, ease: "none",
-                scrollTrigger: {
-                  trigger: grid,
-                  start: () => `top ${80 - i * 4}%`,
-                  end:   () => `top ${52 - i * 4}%`,
-                  scrub: 1,
-                },
-              }
-            );
+          gsap.from(el, {
+            opacity: 0, y: 40, duration: 0.9, ease: "power3.out",
+            scrollTrigger: { trigger: el, start: "top 86%", once: true },
           });
         });
 
-        // Capability cards — slide in from left / bottom / right + 3D rotate.
+        // Grid children — one-shot with a stagger.
+        gsap.utils.toArray(".quote-grid, .demo-grid").forEach((grid) => {
+          gsap.from(grid.querySelectorAll(".reveal"), {
+            opacity: 0, y: 40, rotateX: 12, duration: 0.9, ease: "power3.out",
+            stagger: 0.12,
+            scrollTrigger: { trigger: grid, start: "top 82%", once: true },
+          });
+        });
+
+        // Capability cards — slide in from left / bottom / right, one-shot.
         const from = {
           left:   { x: -90, y: 0,  rotateY:  18 },
           bottom: { x: 0,   y: 90, rotateX:  18 },
@@ -4200,36 +4183,11 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         };
         gsap.utils.toArray(".cap-card").forEach((card, i) => {
           const dir = card.getAttribute("data-cap") || "bottom";
-          gsap.fromTo(card,
-            Object.assign({ opacity: 0 }, from[dir]),
-            {
-              opacity: 1, x: 0, y: 0, rotateX: 0, rotateY: 0, ease: "none",
-              scrollTrigger: {
-                trigger: ".cap-grid",
-                start: () => `top ${82 - i * 6}%`,
-                end:   () => `top ${50 - i * 6}%`,
-                scrub: 1,
-              },
-            }
-          );
+          gsap.from(card, Object.assign({
+            opacity: 0, duration: 1, ease: "power3.out", delay: i * 0.08,
+            scrollTrigger: { trigger: ".cap-grid", start: "top 82%", once: true },
+          }, from[dir]));
         });
-
-        // Timeline connecting line draws in on scroll.
-        const line = document.getElementById("timelineLine");
-        if (line) {
-          gsap.fromTo(line,
-            { scaleX: 0 },
-            {
-              scaleX: 1, ease: "none",
-              scrollTrigger: {
-                trigger: ".timeline",
-                start: "top 78%",
-                end: "top 40%",
-                scrub: 1,
-              },
-            }
-          );
-        }
 
         // Hero card gentle parallax lift as it scrolls away.
         gsap.to(".hero-card", {
@@ -4723,16 +4681,19 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
          -------------------------------------------------------- */
       function initSmoothScroll() {
         if (prefersReduced || typeof Lenis === "undefined") return;
-        // Snappier than before: higher lerp + a touch more wheel travel so the
-        // page keeps up with the pointer instead of feeling floaty/laggy.
+        // Snappier lerp so the resolved position stays close to the wheel — a
+        // low lerp is what makes the page "fall behind then catch up" when
+        // frames drop. wheelMultiplier at 1.0 so the target never races ahead.
         const lenis = new Lenis({
-          lerp: 0.14, smoothWheel: true, wheelMultiplier: 1.15, touchMultiplier: 1.6,
+          lerp: 0.18, smoothWheel: true, wheelMultiplier: 1.0, touchMultiplier: 1.6,
         });
         document.documentElement.style.scrollBehavior = "auto";
 
+        let tickerFn = null;
         if (typeof gsap !== "undefined" && typeof ScrollTrigger !== "undefined") {
           lenis.on("scroll", ScrollTrigger.update);
-          gsap.ticker.add((time) => lenis.raf(time * 1000));
+          tickerFn = (time) => lenis.raf(time * 1000);
+          gsap.ticker.add(tickerFn);
           gsap.ticker.lagSmoothing(0);
         } else {
           const raf = (t) => { lenis.raf(t); requestAnimationFrame(raf); };
@@ -4745,11 +4706,30 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
             const id = a.getAttribute("href");
             if (id.length > 1) {
               const el = document.querySelector(id);
-              if (el) { e.preventDefault(); lenis.scrollTo(el); }
+              if (el) {
+                e.preventDefault();
+                if (window.__lenis) window.__lenis.scrollTo(el);
+                else document.querySelector(id).scrollIntoView({ behavior: "smooth" });
+              }
             }
           });
         });
         window.__lenis = lenis;
+
+        // ESCAPE HATCH: if the device is struggling (sustained frame drops
+        // reported by the WebGL watchdog), tear Lenis down and hand off to the
+        // browser's native compositor-thread scroll. Native scroll cannot
+        // "back up" behind the wheel even when the main thread is saturated,
+        // so this guarantees the page always stays responsive.
+        window.__killSmoothScroll = function () {
+          if (!window.__lenis) return;
+          try {
+            if (tickerFn && typeof gsap !== "undefined") gsap.ticker.remove(tickerFn);
+            window.__lenis.destroy();
+          } catch (e) {}
+          window.__lenis = null;
+          document.documentElement.style.scrollBehavior = "";
+        };
       }
 
       /* --------------------------------------------------------
@@ -5730,7 +5710,12 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
             qLevel++;
             if (qLevel === 1 && bloom) { bloom.strength = 0.32; }     // dim bloom
             else if (qLevel === 2) { composer = null; }               // drop all post-processing
-            else if (qLevel === 3) { targetFps = 34; frameInterval = 1000 / targetFps; } // lower cap
+            else if (qLevel === 3) {
+              targetFps = 34; frameInterval = 1000 / targetFps;   // lower cap
+              // Device is genuinely struggling — hand scroll off to the native
+              // compositor thread so it can never lag behind the wheel.
+              if (window.__killSmoothScroll) window.__killSmoothScroll();
+            }
           }
         }
 
