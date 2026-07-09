@@ -3991,19 +3991,32 @@
         });
       }
 
-      /* ---------- Post-processing: bloom + depth of field ---------- */
-      const composer = new EffectComposer(renderer);
-      composer.setPixelRatio(renderer.getPixelRatio());
-      composer.setSize(W, H);
-      composer.addPass(new RenderPass(scene, camera));
-      const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.5, 0.5, 0.9);
-      composer.addPass(bloom);
-      const bokeh = new BokehPass(scene, camera, { focus: 8.0, aperture: 0.00022, maxblur: 0.007 });
-      bokeh.enabled = !mobile;          // DOF is the priciest pass — off on phones
-      composer.addPass(bokeh);
-      // r128 has no OutputPass — a gamma-correction pass converts the linear
-      // composited buffer to sRGB for display (final pass renders to screen).
-      composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));
+      /* ---------- Post-processing: bloom + depth of field ----------
+         Wrapped so a device that can't build these passes (some mobile
+         GPUs) FALLS BACK to a plain render instead of a blank canvas. */
+      let composer = null, bloom = null, bokeh = null;
+      try {
+        if (EffectComposer && RenderPass && UnrealBloomPass) {
+          composer = new EffectComposer(renderer);
+          composer.setPixelRatio(renderer.getPixelRatio());
+          composer.setSize(W, H);
+          composer.addPass(new RenderPass(scene, camera));
+          bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.5, 0.5, 0.9);
+          composer.addPass(bloom);
+          if (BokehPass) {
+            bokeh = new BokehPass(scene, camera, { focus: 8.0, aperture: 0.00022, maxblur: 0.007 });
+            bokeh.enabled = !mobile;      // DOF is the priciest pass — off on phones
+            composer.addPass(bokeh);
+          }
+          // r128 has no OutputPass — a gamma pass converts linear → sRGB.
+          if (THREE.GammaCorrectionShader) composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));
+        }
+      } catch (e) { console.warn('post-processing unavailable, using plain render', e); composer = null; }
+      // Single render entry point with graceful fallback.
+      function renderFrame() {
+        if (composer) { try { composer.render(); return; } catch (e) { composer = null; } }
+        renderer.render(scene, camera);
+      }
 
       /* ---------- Scroll + pointer state ---------- */
       let scrollMax = 1;
@@ -4040,7 +4053,7 @@
         applyIgnition(dt);        // Wow #1 — globe assembles from particles
         updateAtmosphere(camZ);   // cross-fade fog / lights / exposure / DOM tint
 
-        if (bokeh.enabled) {
+        if (bokeh && bokeh.enabled) {
           const featured = nearestStation(camZ - 8);
           bokeh.uniforms.focus.value = Math.min(30, Math.max(4, camZ - featured));
         }
@@ -4060,15 +4073,15 @@
           st.update(t, prox, p);
         }
 
-        composer.render();
+        renderFrame();
 
         if (!ready) { ready = true; canvas.classList.add('ready'); tStart = now; }
         if (!tuned) {
           frames++;
           if (now - tStart > 1400) {
             const fps = frames / ((now - tStart) / 1000);
-            if (fps < 46) bokeh.enabled = false;
-            if (fps < 32) { bloom.strength = 0.4; renderer.setPixelRatio(1); composer.setPixelRatio(1); onResize(); }
+            if (fps < 46 && bokeh) bokeh.enabled = false;
+            if (fps < 32) { if (bloom) bloom.strength = 0.4; renderer.setPixelRatio(1); if (composer) composer.setPixelRatio(1); onResize(); }
             tuned = true;
           }
         }
@@ -4076,14 +4089,16 @@
 
       if (reduce) {
         applyIgnition(1); updateAtmosphere(camZ);
-        composer.render(); canvas.classList.add('ready');
+        renderFrame(); canvas.classList.add('ready');
       } else requestAnimationFrame(tick);
 
       /* ---------- Resize ---------- */
       function onResize() {
         W = innerWidth; H = innerHeight; mobile = W < 768;
         camera.aspect = W / H; camera.updateProjectionMatrix();
-        renderer.setSize(W, H); composer.setSize(W, H); bloom.setSize(W, H);
+        renderer.setSize(W, H);
+        if (composer) composer.setSize(W, H);
+        if (bloom) bloom.setSize(W, H);
         refreshMax();
       }
       let rt2; addEventListener('resize', () => { clearTimeout(rt2); rt2 = setTimeout(onResize, 180); }, { passive: true });
