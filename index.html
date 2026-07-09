@@ -1023,7 +1023,7 @@
     /* ============================================================
        15B. 3D BACKGROUND CANVAS (Three.js — scroll-driven object)
        ============================================================ */
-    #bg3d {
+    #world {
       position: fixed;
       inset: 0;
       width: 100%;
@@ -1031,9 +1031,9 @@
       z-index: 0;            /* behind all content, above body bg */
       pointer-events: none;  /* never blocks clicks / scroll */
       opacity: 0;            /* fades in once the scene is ready */
-      transition: opacity 1.2s var(--ease);
+      transition: opacity 1.4s var(--ease);
     }
-    #bg3d.ready { opacity: 1; }
+    #world.ready { opacity: 1; }
 
     /* Keep foreground content above the canvas */
     .nav, .capabilities, .demos, .process,
@@ -1947,8 +1947,9 @@
 </head>
 
 <body>
-  <!-- Scroll-driven 3D object lives on this fixed canvas (behind content) -->
-  <canvas id="bg3d" aria-hidden="true"></canvas>
+  <!-- The immersive WebGL world (single persistent scene the camera
+       travels through) lives on this one fixed canvas behind all content. -->
+  <canvas id="world" aria-hidden="true"></canvas>
 
   <!-- Reading-progress bar -->
   <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
@@ -2048,17 +2049,16 @@
   <!-- ================= 3D & MOTION SHOWCASE (scroll-driven) ================= -->
   <section class="showcase" id="motion">
     <div class="showcase-sticky">
-      <canvas id="show3d" aria-hidden="true"></canvas>
       <div class="showcase-scrim" aria-hidden="true"></div>
       <div class="showcase-copy">
         <span class="eyebrow">3D &amp; Motion</span>
-        <h2 class="showcase-head">Objects that move as you scroll.</h2>
+        <h2 class="showcase-head">A world you scroll through.</h2>
         <div class="showcase-steps">
-          <p class="showcase-step" data-step="0">Real 3D geometry rendered live in the browser — no video, no images.</p>
-          <p class="showcase-step" data-step="1">It spins, travels and changes direction the moment you scroll.</p>
-          <p class="showcase-step" data-step="2">Grab it — drag to spin it yourself. Motion your customers can feel.</p>
+          <p class="showcase-step" data-step="0">Everything behind this text is real WebGL — rendered live, not a video.</p>
+          <p class="showcase-step" data-step="1">As you scroll, the camera flies deeper through the scene.</p>
+          <p class="showcase-step" data-step="2">Lighting, reflections, depth of field and bloom — all in the browser.</p>
         </div>
-        <div class="showcase-hint"><span class="drag-ic">↔</span> Drag the shape · scroll to animate</div>
+        <div class="showcase-hint"><span class="drag-ic">↓</span> Keep scrolling to travel</div>
       </div>
     </div>
   </section>
@@ -2442,11 +2442,22 @@
        ============================================================ -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-  <!-- Real 3D (scroll-driven object) + buttery smooth scrolling -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Buttery smooth scrolling -->
   <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
   <!-- SplitType: split headings into chars/words for reveal animations -->
   <script src="https://cdn.jsdelivr.net/npm/split-type@0.3.4/umd/index.min.js"></script>
+
+  <!-- Three.js (modern module build) + addons for the immersive WebGL world.
+       Loaded as ES modules via an import map so postprocessing/env addons
+       resolve to the exact matching version. -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
 
   <script>
     /* ============================================================
@@ -2480,9 +2491,6 @@
         scrollMax = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
       }
 
-      // The 3D & Motion showcase fully covers the background crystal while it
-      // is on screen, so we pause that render to keep everything smooth.
-      let bg3dPaused = false;
 
       // Shared hover-cursor scaling. initCursor() wires up the real setter;
       // bindHover() attaches listeners to any [data-hover] element, including
@@ -3182,155 +3190,6 @@
       }
 
       /* --------------------------------------------------------
-         6. SCROLL-DRIVEN 3D OBJECT (Three.js)
-         A faceted gold-wireframe crystal + particle field that
-         travels across the screen and REVERSES direction as you
-         scroll — inspired by scroll-driven hero objects, rebuilt
-         as an abstract centrepiece rather than a copied bike.
-         -------------------------------------------------------- */
-      function init3D() {
-        const canvas = document.getElementById("bg3d");
-        if (!canvas || typeof THREE === "undefined") return;
-
-        const GOLD = 0xc9a84c;
-        let width = window.innerWidth, height = window.innerHeight;
-        let isMobile = width < 768;
-
-        let renderer;
-        try {
-          renderer = new THREE.WebGLRenderer({
-            canvas, alpha: true, antialias: !isMobile, powerPreference: "high-performance",
-          });
-        } catch (e) { return; } // no WebGL — bail gracefully
-        // This crystal is ambient/blurred background, so it can render at a
-        // lower pixel ratio than the focal showcase — big fragment-shader
-        // saving on high-DPR and low-end devices, with no visible difference.
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.25));
-        renderer.setSize(width, height);
-
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-        // Pull the camera in a touch on phones so the crystal reads large & clear.
-        camera.position.z = isMobile ? 5.6 : 7;
-
-        // The travelling crystal
-        const group = new THREE.Group();
-        scene.add(group);
-
-        const geo = new THREE.IcosahedronGeometry(1.7, 1);
-        const core = new THREE.Mesh(
-          geo,
-          new THREE.MeshStandardMaterial({
-            // Duller, rougher faces so no blown-out gold facet ever sits
-            // behind body copy — this is ambient depth, not a focal object.
-            color: 0x121212, metalness: 0.5, roughness: 0.62,
-            flatShading: true, transparent: true, opacity: isMobile ? 0.8 : 0.6,
-          })
-        );
-        group.add(core);
-
-        const wire = new THREE.LineSegments(
-          new THREE.EdgesGeometry(geo),
-          new THREE.LineBasicMaterial({
-            color: GOLD, transparent: true, opacity: isMobile ? 0.55 : 0.34,
-          })
-        );
-        group.add(wire);
-
-        // Floating particle field
-        const pCount = isMobile ? 180 : 480;
-        const pGeo = new THREE.BufferGeometry();
-        const pos = new Float32Array(pCount * 3);
-        for (let i = 0; i < pCount; i++) {
-          pos[i * 3]     = (Math.random() - 0.5) * 24;
-          pos[i * 3 + 1] = (Math.random() - 0.5) * 16;
-          pos[i * 3 + 2] = (Math.random() - 0.5) * 16 - 4;
-        }
-        pGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-        const particles = new THREE.Points(
-          pGeo,
-          new THREE.PointsMaterial({
-            color: GOLD, size: isMobile ? 0.05 : 0.035, transparent: true,
-            opacity: isMobile ? 0.7 : 0.55,
-          })
-        );
-        scene.add(particles);
-
-        // Lighting — softened so facets stay subtle behind content.
-        scene.add(new THREE.AmbientLight(0xffffff, 0.45));
-        const key = new THREE.PointLight(GOLD, 1.5, 60);
-        key.position.set(5, 5, 6); scene.add(key);
-        const rim = new THREE.PointLight(0x88bbff, 0.7, 60);
-        rim.position.set(-6, -3, 4); scene.add(rim);
-
-        // Bigger on phones so it's unmistakably visible; smaller travel range
-        // so it stays on-screen on narrow viewports.
-        const baseScale = isMobile ? 1.35 : 1;
-        const travelX   = isMobile ? 1.8 : 3.2;
-
-        // Scroll + mouse state (smoothed)
-        let scrollP = 0, mx = 0, my = 0, tmx = 0, tmy = 0;
-        if (isDesktop) {
-          window.addEventListener("mousemove", (e) => {
-            tmx = e.clientX / width - 0.5;
-            tmy = e.clientY / height - 0.5;
-          }, { passive: true });
-        }
-
-        // Render at ~40fps instead of 60. The object is ambient background
-        // motion, so the eye barely notices — but it hands a big slice of the
-        // main thread back to scrolling, which is what was lagging.
-        let last = 0;
-        const minDelta = 1000 / 40;
-
-        function frame(now) {
-          requestAnimationFrame(frame);
-          if (document.hidden || bg3dPaused) return;
-          if (now - last < minDelta) return;
-          last = now;
-
-          scrollP = lerp(scrollP, Math.min(1, window.scrollY / scrollMax), 0.08);
-          mx = lerp(mx, tmx, 0.05);
-          my = lerp(my, tmy, 0.05);
-          const t = now * 0.001;
-
-          // Continuous spin + scroll adds turns; sine paths reverse direction.
-          group.rotation.y = t * 0.15 + scrollP * Math.PI * 4;
-          group.rotation.x = Math.sin(scrollP * Math.PI * 3) * 0.7 + my * 0.6;
-          group.rotation.z = Math.sin(scrollP * Math.PI * 2) * 0.4;
-
-          // Travel across the viewport, drifting down as the page advances.
-          group.position.x = Math.sin(scrollP * Math.PI * 2) * travelX + mx * 1.2;
-          group.position.y = -scrollP * 2.4 + Math.sin(t * 0.5) * 0.12;
-          group.scale.setScalar(baseScale * (1 - scrollP * 0.3));
-
-          particles.rotation.y = t * 0.02 + scrollP * 0.6;
-          particles.position.y = scrollP * 1.5;
-
-          camera.position.x = mx * 0.8;
-          camera.position.y = -my * 0.6;
-          camera.lookAt(0, 0, 0);
-
-          renderer.render(scene, camera);
-        }
-
-        if (prefersReduced) {
-          renderer.render(scene, camera); // single static frame
-        } else {
-          requestAnimationFrame(frame);
-        }
-        requestAnimationFrame(() => canvas.classList.add("ready"));
-
-        window.addEventListener("resize", () => {
-          width = window.innerWidth; height = window.innerHeight;
-          isMobile = width < 768;
-          camera.aspect = width / height;
-          camera.updateProjectionMatrix();
-          renderer.setSize(width, height);
-        }, { passive: true });
-      }
-
-      /* --------------------------------------------------------
          7. SMOOTH SCROLLING (Lenis) — glides the whole page and
          drives ScrollTrigger for perfectly synced animations.
          -------------------------------------------------------- */
@@ -3396,156 +3255,30 @@
       }
 
       /* --------------------------------------------------------
-         11. 3D & MOTION SHOWCASE — a dedicated scroll-driven scene
-         with its own object that spins/travels as you scroll AND
-         can be grabbed and dragged. This is the "hero" proof that
-         we build real 3D motion for the web.
+         11. SHOWCASE STEP CYCLER — advances the pinned caption in the
+         "A world you scroll through" section based on scroll progress.
+         (The 3D itself now lives in the WebGL world module.)
          -------------------------------------------------------- */
-      function initShowcase3D() {
-        const canvas = document.getElementById("show3d");
+      function initShowcaseSteps() {
         const section = document.getElementById("motion");
-        if (!canvas || !section || typeof THREE === "undefined") return;
-
-        let width = section.clientWidth || window.innerWidth;
-        let height = window.innerHeight;
-
-        let renderer;
-        try {
-          renderer = new THREE.WebGLRenderer({
-            canvas, alpha: true, antialias: window.innerWidth >= 768,
-            powerPreference: "high-performance",
-          });
-        } catch (e) { return; }
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-        renderer.setSize(width, height);
-
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-        camera.position.z = 6;
-
-        const group = new THREE.Group();
-        scene.add(group);
-
-        const geo = new THREE.IcosahedronGeometry(1.9, 1);
-        const solid = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
-          color: 0x0f0f0f, metalness: 0.7, roughness: 0.25,
-          flatShading: true, transparent: true, opacity: 0.92,
-        }));
-        const wire = new THREE.LineSegments(
-          new THREE.EdgesGeometry(geo),
-          new THREE.LineBasicMaterial({ color: 0xc9a84c, transparent: true, opacity: 0.8 })
-        );
-        group.add(solid, wire);
-
-        // A thin orbiting ring for extra depth/motion.
-        const ring = new THREE.Mesh(
-          new THREE.TorusGeometry(3, 0.015, 8, 140),
-          new THREE.MeshBasicMaterial({ color: 0xc9a84c, transparent: true, opacity: 0.35 })
-        );
-        ring.rotation.x = Math.PI / 2.2;
-        group.add(ring);
-
-        scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-        const key = new THREE.PointLight(0xc9a84c, 2.4, 60); key.position.set(5, 5, 7); scene.add(key);
-        const rim = new THREE.PointLight(0x88bbff, 1.2, 60); rim.position.set(-6, -2, 4); scene.add(rim);
-
-        // Scroll progress (ScrollTrigger if present, else manual), plus drag + mouse.
-        let progress = 0, targetProgress = 0;
-        let dragAngle = 0, dragVel = 0, dragging = false, lastX = 0;
-        let mx = 0, my = 0, tmx = 0, tmy = 0;
-
-        if (typeof ScrollTrigger !== "undefined") {
-          ScrollTrigger.create({
-            trigger: section, start: "top top", end: "bottom bottom",
-            onUpdate: (self) => { targetProgress = self.progress; },
-          });
-        }
-        const manualProgress = () => {
-          const total = section.offsetHeight - window.innerHeight;
-          return total > 0
-            ? Math.min(1, Math.max(0, -section.getBoundingClientRect().top / total))
-            : 0;
-        };
-
+        if (!section) return;
         const steps = section.querySelectorAll(".showcase-step");
+        if (!steps.length) return;
         const setStep = (p) => {
           const idx = p < 0.4 ? 0 : p < 0.72 ? 1 : 2;
           steps.forEach((s, i) => s.classList.toggle("active", i === idx));
         };
         setStep(0);
-
-        // Grab-to-spin on the canvas itself.
-        canvas.style.cursor = "grab";
-        canvas.addEventListener("pointerdown", (e) => {
-          dragging = true; dragVel = 0; lastX = e.clientX;
-          canvas.style.cursor = "grabbing";
-          canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId);
-        });
-        window.addEventListener("pointermove", (e) => {
-          if (isDesktop) {
-            tmx = e.clientX / window.innerWidth - 0.5;
-            tmy = e.clientY / window.innerHeight - 0.5;
-          }
-          if (!dragging) return;
-          const dx = e.clientX - lastX; lastX = e.clientX;
-          dragAngle += dx * 0.01; dragVel = dx * 0.01;
-        }, { passive: true });
-        const release = () => { if (dragging) { dragging = false; canvas.style.cursor = "grab"; } };
-        window.addEventListener("pointerup", release);
-        window.addEventListener("pointercancel", release);
-
-        // Only render while the showcase is actually on screen (it fully
-        // covers the background crystal anyway). This guarantees just ONE
-        // WebGL scene renders at any moment — big win for FPS.
-        let sectionVisible = !("IntersectionObserver" in window);
-
-        let last = 0; const minDelta = 1000 / 40;
-        function frame(now) {
-          requestAnimationFrame(frame);
-          if (document.hidden || !sectionVisible) return;
-          if (now - last < minDelta) return;
-          last = now;
-
-          if (typeof ScrollTrigger === "undefined") targetProgress = manualProgress();
-          progress = lerp(progress, targetProgress, 0.1);
-          mx = lerp(mx, tmx, 0.05); my = lerp(my, tmy, 0.05);
-          if (!dragging) { dragAngle += dragVel; dragVel *= 0.94; }
-          setStep(progress);
-
-          const t = now * 0.001;
-          group.rotation.y = progress * Math.PI * 3 + dragAngle + t * 0.05;
-          group.rotation.x = Math.sin(progress * Math.PI * 2) * 0.5 + my * 0.5;
-          group.rotation.z = progress * 0.6;
-          group.position.x = Math.sin(progress * Math.PI * 2) * 1.2 + mx * 0.6;
-          group.scale.setScalar(0.82 + progress * 0.5);
-          ring.rotation.z = t * 0.1 + progress * 2;
-
-          camera.lookAt(0, 0, 0);
-          renderer.render(scene, camera);
-        }
-        if (prefersReduced) { setStep(0.5); renderer.render(scene, camera); }
-        else requestAnimationFrame(frame);
-
-        // While the showcase is on screen: run show3d, pause the background
-        // crystal. Off screen: the reverse. One scene at a time.
-        if ("IntersectionObserver" in window) {
-          const io = new IntersectionObserver(
-            (ents) => ents.forEach((en) => {
-              sectionVisible = en.isIntersecting;
-              bg3dPaused = en.isIntersecting;
-            }),
-            { threshold: 0.01 }
-          );
-          io.observe(section.querySelector(".showcase-sticky"));
-        }
-
-        window.addEventListener("resize", () => {
-          width = section.clientWidth || window.innerWidth;
-          height = window.innerHeight;
-          camera.aspect = width / height;
-          camera.updateProjectionMatrix();
-          renderer.setSize(width, height);
-        }, { passive: true });
+        if (prefersReduced) { setStep(0.5); return; }
+        const update = () => {
+          const total = section.offsetHeight - window.innerHeight;
+          const p = total > 0
+            ? Math.min(1, Math.max(0, -section.getBoundingClientRect().top / total))
+            : 0;
+          setStep(p);
+        };
+        window.addEventListener("scroll", update, { passive: true });
+        update();
       }
 
       /* --------------------------------------------------------
@@ -3961,9 +3694,8 @@
         initScrollAnimations();
         initDemos();
         refreshScrollMax();
-        init3D();
         initSmoothScroll();
-        initShowcase3D();
+        initShowcaseSteps();   // 3D itself now lives in the WebGL world module
         initPlayground();
         initScrollProgress();
         initMagnetic();
@@ -4008,6 +3740,306 @@
         }, 200);
       }, { passive: true });
     })();
+  </script>
+
+  <!-- ============================================================
+       IMMERSIVE WEBGL WORLD (Three.js, ES modules)
+       One persistent renderer + scene. A single camera flies through
+       five "stations" as you scroll (globe → holo cards → timeline →
+       project cubes → galaxy). Real PBR lighting, PMREM environment
+       reflections, Unreal bloom and Bokeh depth-of-field, GPU-instanced
+       cubes and buffer-geometry particle systems. Quality auto-tunes to
+       sustain framerate; fully skipped for prefers-reduced-motion.
+       ============================================================ -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+    import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+    const canvas = document.getElementById('world');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const lerp = (a, b, n) => a + (b - a) * n;
+    const GOLD = new THREE.Color('#c9a84c');
+    let W = innerWidth, H = innerHeight, mobile = W < 768;
+
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, powerPreference: 'high-performance' });
+    } catch (e) { console.warn('WebGL unavailable — world skipped', e); }
+    if (renderer) boot();
+
+    function boot() {
+      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, mobile ? 1.25 : 1.5));
+      renderer.setSize(W, H);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.05;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(52, W / H, 0.1, 600);
+      camera.position.set(0, 0, 8);
+
+      // ---- Environment reflections (generated once — very cheap) ----
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+      // ---- Realistic lighting ----
+      scene.add(new THREE.AmbientLight(0xffffff, 0.32));
+      const key = new THREE.DirectionalLight(0xfff1d6, 2.6); key.position.set(6, 8, 10); scene.add(key);
+      const rim = new THREE.DirectionalLight(0x6f8dff, 1.4); rim.position.set(-8, -3, -6); scene.add(rim);
+      const spark = new THREE.PointLight(0xffd27a, 1.6, 44); spark.position.set(0, 0, 3); scene.add(spark);
+
+      // ---- Station depths the camera travels between ----
+      const Z = { hero: 0, services: -34, about: -68, portfolio: -102, contact: -140 };
+
+      // ---- Global drifting starfield spanning the whole corridor, so every
+      //      section keeps atmospheric depth even between the 3D stations. ----
+      const FIELD = mobile ? 3200 : 6500;
+      const fg = new THREE.BufferGeometry();
+      const fp = new Float32Array(FIELD * 3), fc = new Float32Array(FIELD * 3);
+      const sCold = new THREE.Color('#cfd8ff'), sWarm = new THREE.Color('#ffdca0');
+      for (let i = 0; i < FIELD; i++) {
+        fp[i * 3] = (Math.random() - 0.5) * 64;
+        fp[i * 3 + 1] = (Math.random() - 0.5) * 46;
+        fp[i * 3 + 2] = 12 - Math.random() * 166;   // covers +12 .. -154 (whole path)
+        const col = Math.random() < 0.3 ? sWarm : sCold;
+        fc[i * 3] = col.r; fc[i * 3 + 1] = col.g; fc[i * 3 + 2] = col.b;
+      }
+      fg.setAttribute('position', new THREE.BufferAttribute(fp, 3));
+      fg.setAttribute('color', new THREE.BufferAttribute(fc, 3));
+      const starfield = new THREE.Points(fg, new THREE.PointsMaterial({
+        size: mobile ? 0.13 : 0.1, vertexColors: true, transparent: true,
+        opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending,
+      }));
+      scene.add(starfield);
+
+      /* helper: buffer-geometry particle cloud */
+      function particleField(count, rInner, rOuter, color, size, additive = true) {
+        const g = new THREE.BufferGeometry();
+        const p = new Float32Array(count * 3);
+        for (let i = 0; i < count; i++) {
+          const r = rInner + Math.random() * (rOuter - rInner);
+          const th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
+          p[i * 3] = r * Math.sin(ph) * Math.cos(th);
+          p[i * 3 + 1] = r * Math.sin(ph) * Math.sin(th);
+          p[i * 3 + 2] = r * Math.cos(ph);
+        }
+        g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+        return new THREE.Points(g, new THREE.PointsMaterial({
+          color, size, transparent: true, opacity: 0.7, depthWrite: false,
+          blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+        }));
+      }
+
+      /* ========== STATION 1 — HERO GLOBE ========== */
+      const globe = new THREE.Group(); globe.position.z = Z.hero; scene.add(globe);
+      const core = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(1.7, 6),
+        new THREE.MeshStandardMaterial({ color: 0x0d0d10, metalness: 1.0, roughness: 0.16, envMapIntensity: 1.3 })
+      );
+      globe.add(core);
+      const grid = new THREE.Mesh(
+        new THREE.SphereGeometry(1.86, 40, 22),
+        new THREE.MeshBasicMaterial({ color: GOLD, wireframe: true, transparent: true, opacity: 0.14 })
+      );
+      globe.add(grid);
+      const atmo = new THREE.Mesh(
+        new THREE.SphereGeometry(2.4, 48, 32),
+        new THREE.ShaderMaterial({
+          transparent: true, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false,
+          uniforms: { c: { value: GOLD.clone() } },
+          vertexShader: 'varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+          fragmentShader: 'varying vec3 vN; uniform vec3 c; void main(){ float i = pow(0.72 - dot(vN, vec3(0.0,0.0,1.0)), 3.0); gl_FragColor = vec4(c * i, i); }',
+        })
+      );
+      globe.add(atmo);
+      const halo = particleField(mobile ? 700 : 1600, 2.7, 5.4, GOLD, mobile ? 0.05 : 0.035);
+      globe.add(halo);
+
+      /* ========== STATION 2 — HOLOGRAPHIC SERVICE CARDS ========== */
+      const services = new THREE.Group(); services.position.z = Z.services; scene.add(services);
+      const holoMat = () => new THREE.ShaderMaterial({
+        transparent: true, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending,
+        uniforms: { t: { value: 0 }, c: { value: new THREE.Color('#7fb2ff') } },
+        vertexShader: 'varying vec2 vUv; varying vec3 vN; void main(){ vUv = uv; vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+        fragmentShader: [
+          'varying vec2 vUv; varying vec3 vN; uniform float t; uniform vec3 c;',
+          'void main(){',
+          '  float scan = 0.5 + 0.5 * sin((vUv.y * 60.0) - t * 3.0);',
+          '  float edge = smoothstep(0.0,0.06,vUv.x) * smoothstep(0.0,0.06,1.0-vUv.x) * smoothstep(0.0,0.06,vUv.y) * smoothstep(0.0,0.06,1.0-vUv.y);',
+          '  float fres = pow(1.0 - abs(dot(vN, vec3(0.0,0.0,1.0))), 2.0);',
+          '  float a = (0.10 + 0.22 * scan) * edge + 0.5 * fres * edge;',
+          '  gl_FragColor = vec4(c * (0.7 + scan * 0.6 + fres), a);',
+          '}',
+        ].join('\n'),
+      });
+      const holoMats = [];
+      const cardCount = 5;
+      for (let i = 0; i < cardCount; i++) {
+        const m = holoMat(); holoMats.push(m);
+        const card = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 4.4), m);
+        const a = (i - (cardCount - 1) / 2) * 0.5;
+        card.position.set(a * 7, 0, Math.cos(a) * 3);
+        card.rotation.y = -a * 0.6;
+        card.userData.phase = i * 1.3;
+        services.add(card);
+        card.add(new THREE.LineSegments(
+          new THREE.EdgesGeometry(card.geometry),
+          new THREE.LineBasicMaterial({ color: new THREE.Color('#8fbaff'), transparent: true, opacity: 0.5 })
+        ));
+      }
+
+      /* ========== STATION 3 — 3D TIMELINE ========== */
+      const about = new THREE.Group(); about.position.z = Z.about; scene.add(about);
+      const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-9, -2.5, 0), new THREE.Vector3(-3, 1.6, 1.5),
+        new THREE.Vector3(3, -1.6, -1.5), new THREE.Vector3(9, 2.5, 0),
+      ]);
+      about.add(new THREE.Mesh(
+        new THREE.TubeGeometry(curve, 120, 0.03, 8, false),
+        new THREE.MeshBasicMaterial({ color: GOLD, transparent: true, opacity: 0.5 })
+      ));
+      const nodeGeo = new THREE.SphereGeometry(0.28, 24, 24);
+      const nodeMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, metalness: 0.9, roughness: 0.2, emissive: GOLD, emissiveIntensity: 1.4 });
+      const nodes = [];
+      [0.06, 0.38, 0.68, 0.94].forEach((u) => {
+        const n = new THREE.Mesh(nodeGeo, nodeMat);
+        n.position.copy(curve.getPointAt(u)); about.add(n); nodes.push(n);
+      });
+
+      /* ========== STATION 4 — PORTFOLIO CUBES (GPU instanced) ========== */
+      const portfolio = new THREE.Group(); portfolio.position.z = Z.portfolio; scene.add(portfolio);
+      const CUBES = mobile ? 18 : 34;
+      const cubeMesh = new THREE.InstancedMesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshStandardMaterial({ color: 0x141414, metalness: 0.95, roughness: 0.22, envMapIntensity: 1.4 }),
+        CUBES
+      );
+      const dummy = new THREE.Object3D();
+      for (let i = 0; i < CUBES; i++) {
+        dummy.position.set((Math.random() - 0.5) * 16, (Math.random() - 0.5) * 12, (Math.random() - 0.5) * 16);
+        dummy.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+        dummy.scale.setScalar(0.5 + Math.random() * 1.4);
+        dummy.updateMatrix(); cubeMesh.setMatrixAt(i, dummy.matrix);
+      }
+      portfolio.add(cubeMesh);
+
+      /* ========== STATION 5 — GALAXY ========== */
+      const contact = new THREE.Group(); contact.position.z = Z.contact; scene.add(contact);
+      const GAL = mobile ? 6000 : 16000;
+      const gg = new THREE.BufferGeometry();
+      const gp = new Float32Array(GAL * 3), gc = new Float32Array(GAL * 3);
+      const cA = new THREE.Color('#c9a84c'), cB = new THREE.Color('#5b7cff');
+      for (let i = 0; i < GAL; i++) {
+        const arm = i % 3, r = Math.pow(Math.random(), 0.6) * 22;
+        const ang = r * 0.32 + arm * (Math.PI * 2 / 3) + (Math.random() - 0.5) * 0.5;
+        gp[i * 3] = Math.cos(ang) * r + (Math.random() - 0.5) * 2;
+        gp[i * 3 + 1] = (Math.random() - 0.5) * Math.max(0.6, 2.2 - r * 0.06);
+        gp[i * 3 + 2] = Math.sin(ang) * r + (Math.random() - 0.5) * 2;
+        const col = cA.clone().lerp(cB, Math.min(1, r / 22));
+        gc[i * 3] = col.r; gc[i * 3 + 1] = col.g; gc[i * 3 + 2] = col.b;
+      }
+      gg.setAttribute('position', new THREE.BufferAttribute(gp, 3));
+      gg.setAttribute('color', new THREE.BufferAttribute(gc, 3));
+      const galaxy = new THREE.Points(gg, new THREE.PointsMaterial({
+        size: 0.09, vertexColors: true, transparent: true, opacity: 0.9,
+        depthWrite: false, blending: THREE.AdditiveBlending,
+      }));
+      galaxy.rotation.x = 0.5; contact.add(galaxy);
+
+      /* ---------- Post-processing: bloom + depth of field ---------- */
+      const composer = new EffectComposer(renderer);
+      composer.setPixelRatio(renderer.getPixelRatio());
+      composer.setSize(W, H);
+      composer.addPass(new RenderPass(scene, camera));
+      const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.62, 0.5, 0.82);
+      composer.addPass(bloom);
+      const bokeh = new BokehPass(scene, camera, { focus: 8.0, aperture: 0.00022, maxblur: 0.007 });
+      bokeh.enabled = !mobile;          // DOF is the priciest pass — off on phones
+      composer.addPass(bokeh);
+      composer.addPass(new OutputPass());
+
+      /* ---------- Scroll + pointer state ---------- */
+      let scrollMax = 1;
+      const refreshMax = () => { scrollMax = Math.max(1, document.documentElement.scrollHeight - innerHeight); };
+      refreshMax();
+      addEventListener('load', refreshMax); setTimeout(refreshMax, 800); setTimeout(refreshMax, 2200);
+
+      let tmx = 0, tmy = 0, mx = 0, my = 0;
+      if (matchMedia('(pointer:fine)').matches) {
+        addEventListener('pointermove', (e) => { tmx = e.clientX / W - 0.5; tmy = e.clientY / H - 0.5; }, { passive: true });
+      }
+
+      const startZ = 8, endZ = Z.contact + 8;   // fly from in-front-of-globe to in-front-of-galaxy
+      let camZ = startZ;
+      const stationZs = Object.values(Z);
+      const nearestStation = (z) => stationZs.reduce((a, b) => Math.abs(b - z) < Math.abs(a - z) ? b : a, stationZs[0]);
+
+      /* ---------- Render loop with adaptive quality ---------- */
+      let ready = false, frames = 0, tStart = 0, tuned = false;
+      function tick(now) {
+        requestAnimationFrame(tick);
+        if (document.hidden) return;
+        const t = now * 0.001;
+
+        const p = Math.min(1, Math.max(0, scrollY / scrollMax));
+        camZ = lerp(camZ, startZ + p * (endZ - startZ), 0.06);
+        mx = lerp(mx, tmx, 0.05); my = lerp(my, tmy, 0.05);
+        camera.position.x = mx * 1.4;
+        camera.position.y = -my * 1.0;
+        camera.position.z = camZ;
+        camera.lookAt(mx * 2.0, -my * 1.5, camZ - 12);
+
+        if (bokeh.enabled) {
+          const featured = nearestStation(camZ - 8);
+          bokeh.uniforms.focus.value = Math.min(30, Math.max(4, camZ - featured));
+        }
+
+        globe.rotation.y = t * 0.08 + p * 6.0;
+        globe.rotation.x = Math.sin(t * 0.2) * 0.1;
+        halo.rotation.y = -t * 0.03;
+        core.rotation.y = t * 0.05;
+
+        for (let i = 0; i < holoMats.length; i++) holoMats[i].uniforms.t.value = t;
+        services.children.forEach((c) => { c.position.y = Math.sin(t + (c.userData.phase || 0)) * 0.35; });
+
+        about.rotation.z = Math.sin(t * 0.15) * 0.05;
+        nodes.forEach((n, i) => n.scale.setScalar(1 + Math.sin(t * 2 + i) * 0.12));
+
+        portfolio.rotation.y = t * 0.06;
+        portfolio.rotation.x = Math.sin(t * 0.1) * 0.15;
+
+        galaxy.rotation.y = t * 0.04;
+
+        composer.render();
+
+        if (!ready) { ready = true; canvas.classList.add('ready'); tStart = now; }
+        if (!tuned) {
+          frames++;
+          if (now - tStart > 1400) {
+            const fps = frames / ((now - tStart) / 1000);
+            if (fps < 46) bokeh.enabled = false;
+            if (fps < 32) { bloom.strength = 0.4; renderer.setPixelRatio(1); composer.setPixelRatio(1); onResize(); }
+            tuned = true;
+          }
+        }
+      }
+
+      if (reduce) { composer.render(); canvas.classList.add('ready'); }
+      else requestAnimationFrame(tick);
+
+      /* ---------- Resize ---------- */
+      function onResize() {
+        W = innerWidth; H = innerHeight; mobile = W < 768;
+        camera.aspect = W / H; camera.updateProjectionMatrix();
+        renderer.setSize(W, H); composer.setSize(W, H); bloom.setSize(W, H);
+        refreshMax();
+      }
+      let rt2; addEventListener('resize', () => { clearTimeout(rt2); rt2 = setTimeout(onResize, 180); }, { passive: true });
+    }
   </script>
 </body>
 </html>
