@@ -5424,7 +5424,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
       const globe = new THREE.Group(); globe.position.z = Z.hero; scene.add(globe);
       const core = new THREE.Mesh(
         new THREE.IcosahedronGeometry(1.7, 6),
-        new THREE.MeshStandardMaterial({ color: 0x0d0d10, metalness: 1.0, roughness: 0.16, envMapIntensity: 1.3 })
+        new THREE.MeshStandardMaterial({ color: 0x0d0d10, metalness: 1.0, roughness: 0.16, envMapIntensity: 1.3, transparent: true })
       );
       globe.add(core);
       const grid = new THREE.Mesh(
@@ -5477,15 +5477,26 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
       // globe scale-up and material fade-in.
       let ignite = reduce ? 1 : 0;
       const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      // Advance the ignition (halo convergence) and return the eased value.
+      // Visual opacity/scale is applied in the loop so it can also fold in the
+      // hero-fade (the globe must dissolve as the camera leaves it).
       function applyIgnition(dt) {
         if (ignite < 1) ignite = Math.min(1, ignite + dt / 2.2);
         const e = easeOut(ignite);
         for (let i = 0; i < HALO * 3; i++) haloPos[i] = haloStart[i] + (haloTarget[i] - haloStart[i]) * e;
         haloGeo.attributes.position.needsUpdate = true;
-        const s = 0.15 + 0.85 * e; core.scale.setScalar(s); grid.scale.setScalar(s);
-        atmo.material.uniforms.o.value = e; grid.material.opacity = 0.14 * e;
-        halo.material.opacity = 0.5 * e;
+        return e;
       }
+      // Apply globe visibility = ignition × hero-fade (hp).
+      function applyGlobe(e, hp) {
+        const s = 0.15 + 0.85 * e; core.scale.setScalar(s); grid.scale.setScalar(s);
+        core.material.opacity = e * hp;
+        grid.material.opacity = 0.14 * e * hp;
+        atmo.material.uniforms.o.value = e * hp;
+        halo.material.opacity = 0.5 * e * hp;
+        globe.visible = e * hp > 0.01;
+      }
+      const smoothstep = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
 
       /* ========== INDUSTRY WORLDS ==========
          A tiny registry: each world builds its own group with a distinct
@@ -5645,6 +5656,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
       /* Align each world's depth to its DOM panel, so the matching hero object
          centres behind the copy as it scrolls into view. Recomputed whenever
          the layout changes. */
+      let fadeRange = 16;   // recomputed from actual world spacing
       function alignWorlds() {
         STATIONS.forEach((st) => {
           const panel = document.querySelector('.world-panel[data-world="' + st.key + '"]');
@@ -5658,6 +5670,13 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
           if (w) w.z = z;
         });
         worlds.sort((a, b) => b.z - a.z);   // keep atmosphere list ordered by depth
+        // Fade range = ~45% of the smallest gap between worlds (incl. origin at
+        // 0), so a world fully dissolves before its neighbour appears — no two
+        // objects share the screen. Clamped to a sane range.
+        const zs = [0, ...STATIONS.map((s) => s.z)].sort((a, b) => b - a);
+        let minGap = Infinity;
+        for (let i = 1; i < zs.length; i++) minGap = Math.min(minGap, Math.abs(zs[i] - zs[i - 1]));
+        if (isFinite(minGap)) fadeRange = Math.max(9, Math.min(18, minGap * 0.46));
       }
       const relayout = () => { refreshMax(); alignWorlds(); };
       relayout();
@@ -5691,25 +5710,32 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         camera.position.z = camZ;
         camera.lookAt(mx * 2.0, -my * 1.5, camZ - 12);
 
-        applyIgnition(dt);        // Wow #1 — globe assembles from particles
-        updateAtmosphere(camZ);   // cross-fade fog / lights / exposure / DOM tint
+        const camPos = camZ - 8;
+        const e = applyIgnition(dt);   // Wow #1 — globe assembles from particles
+        updateAtmosphere(camZ);        // cross-fade fog / lights / exposure / DOM tint
+
+        // Globe visibility = ignition × how close we still are to the origin,
+        // so it dissolves cleanly as the camera flies toward the first world.
+        const heroProx = smoothstep(1 - Math.abs(camPos - 0) / fadeRange);
+        applyGlobe(e, heroProx);
+        if (globe.visible) {
+          globe.rotation.y = t * 0.08 + p * 6.0;
+          globe.rotation.x = Math.sin(t * 0.2) * 0.1;
+          halo.rotation.y = -t * 0.03;
+          core.rotation.y = t * 0.05;
+        }
 
         if (bokeh && bokeh.enabled) {
-          const featured = nearestStation(camZ - 8);
+          const featured = nearestStation(camPos);
           bokeh.uniforms.focus.value = Math.min(30, Math.max(4, camZ - featured));
         }
 
-        globe.rotation.y = t * 0.08 + p * 6.0;
-        globe.rotation.x = Math.sin(t * 0.2) * 0.1;
-        halo.rotation.y = -t * 0.03;
-        core.rotation.y = t * 0.05;
-
         // Drive each industry world by proximity — materialize as the camera
-        // nears, dissolve as it leaves. Far worlds are skipped entirely.
-        const camPos = camZ - 8;
+        // nears, dissolve as it leaves (smoothstep for clean edges). Far worlds
+        // are skipped entirely so only one world shares the screen.
         for (const st of STATIONS) {
-          const prox = Math.max(0, 1 - Math.abs(camPos - st.z) / 18);
-          if (prox <= 0.001) { if (st.group.visible) st.group.visible = false; continue; }
+          const prox = smoothstep(1 - Math.abs(camPos - st.z) / fadeRange);
+          if (prox <= 0.002) { if (st.group.visible) st.group.visible = false; continue; }
           st.group.visible = true;
           st.update(t, prox, p);
         }
@@ -5729,7 +5755,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
       }
 
       if (reduce) {
-        applyIgnition(1); updateAtmosphere(camZ);
+        const e = applyIgnition(1); updateAtmosphere(camZ); applyGlobe(e, 1);
         renderFrame(); canvas.classList.add('ready');
       } else requestAnimationFrame(tick);
 
