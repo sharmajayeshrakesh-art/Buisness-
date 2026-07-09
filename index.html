@@ -941,21 +941,28 @@
                   color-mix(in srgb, var(--accent) 22%, #131313),
                   #0d0d0d);
       display: flex;
-      align-items: flex-end;
-      padding: 16px;
-      font-size: 2.4rem;
+      align-items: center;
+      justify-content: center;
       transition: transform 0.5s var(--ease), border-color 0.5s var(--ease);
     }
     .dm-tile:nth-child(odd) { aspect-ratio: 3 / 3.4; }
-    .dm-tile span {
-      position: absolute;
-      left: 16px; bottom: 14px;
-      font-family: var(--font-body);
-      font-size: 0.8rem;
-      letter-spacing: 0.04em;
-      color: var(--text);
+    /* Emoji sits centred; label lives in its own bottom bar — no overlap. */
+    .dm-tile .emoji {
+      font-size: 2.6rem;
+      line-height: 1;
+      opacity: 0.92;
+      transform: translateY(-10px);
     }
-    .dm-tile .emoji { font-size: 2.2rem; line-height: 1; opacity: 0.9; }
+    .dm-tile .label {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      padding: 12px 14px;
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      letter-spacing: 0.03em;
+      color: var(--text);
+      background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+    }
     .dm-tile:hover { transform: translateY(-6px); border-color: var(--accent); }
 
     .dm-quote {
@@ -1016,7 +1023,7 @@
     /* ============================================================
        15B. 3D BACKGROUND CANVAS (Three.js — scroll-driven object)
        ============================================================ */
-    #bg3d {
+    #world {
       position: fixed;
       inset: 0;
       width: 100%;
@@ -1024,9 +1031,18 @@
       z-index: 0;            /* behind all content, above body bg */
       pointer-events: none;  /* never blocks clicks / scroll */
       opacity: 0;            /* fades in once the scene is ready */
-      transition: opacity 1.2s var(--ease);
+      transition: opacity 1.4s var(--ease);
     }
-    #bg3d.ready { opacity: 1; }
+    #world.ready { opacity: 1; }
+
+    .atmos {
+      position: fixed;
+      inset: 0;
+      z-index: 1;             /* above the world canvas, below content (z-index 2) */
+      pointer-events: none;
+      transition: background 0.6s linear;
+      mix-blend-mode: screen; /* tints light areas, keeps darks clean */
+    }
 
     /* Keep foreground content above the canvas */
     .nav, .capabilities, .demos, .process,
@@ -1055,7 +1071,10 @@
     /* ============================================================
        15D. SHIMMERING GOLD ACCENT (hero headline word)
        ============================================================ */
-    .hero h1 .accent {
+    /* Target the accent AND the SplitType word inside it, so the gold
+       gradient survives when the heading is split for the reveal. */
+    .hero h1 .accent,
+    .hero h1 .accent .word {
       background: linear-gradient(100deg,
                   var(--gold) 20%, #f6e6a8 40%, var(--gold) 60%);
       background-size: 220% auto;
@@ -1122,6 +1141,185 @@
     }
 
     /* ============================================================
+       15F. 3D & MOTION SHOWCASE (scroll-driven, sticky canvas)
+       ============================================================ */
+    .showcase {
+      position: relative;
+      height: 320vh;               /* tall -> gives scroll distance to animate */
+      z-index: 2;
+    }
+    .showcase-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #show3d {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    .showcase-scrim {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: radial-gradient(120% 90% at 50% 50%, transparent 40%, var(--bg) 92%);
+    }
+    .showcase-copy {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 0 24px;
+      max-width: 720px;
+      pointer-events: none;         /* let drags reach the canvas */
+    }
+    .showcase-copy .eyebrow { color: var(--gold); }
+    .showcase-head {
+      font-size: clamp(2.2rem, 6vw, 4.4rem);
+      color: var(--text);
+      margin-bottom: 26px;
+    }
+    .showcase-steps { position: relative; height: 4.4em; margin: 0 auto; max-width: 40ch; }
+    .showcase-step {
+      position: absolute;
+      inset: 0;
+      font-size: 1.08rem;
+      color: var(--text-dim);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(12px);
+      transition: opacity 0.45s var(--ease), transform 0.45s var(--ease),
+                  visibility 0s linear 0.45s;
+    }
+    .showcase-step.active {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      transition: opacity 0.45s var(--ease), transform 0.45s var(--ease),
+                  visibility 0s linear 0s;
+    }
+    .showcase-hint {
+      margin-top: 40px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .showcase-hint .drag-ic { color: var(--gold); animation: nudge 2.4s var(--ease) infinite; }
+
+    /* ============================================================
+       15G. INTERACTIVE PLAYGROUND
+       ============================================================ */
+    .playground { position: relative; padding: 150px 0 160px; z-index: 2; }
+    .play-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 66px;
+      perspective: 1200px;
+    }
+    .play-card {
+      position: relative;
+      min-height: 300px;
+      border-radius: 20px;
+      overflow: hidden;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 40px 36px;
+      display: flex;
+      transform-style: preserve-3d;
+      transition: border-color 0.5s var(--ease), transform 0.35s var(--ease);
+    }
+    .play-card:hover { border-color: var(--gold-line); }
+    .play-body { position: relative; z-index: 2; align-self: flex-end; transform: translateZ(40px); }
+    .play-ic {
+      width: 56px; height: 56px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem;
+      background: var(--gold-soft);
+      border: 1px solid var(--gold-line);
+      margin-bottom: 26px;
+    }
+    .play-card h3 { font-size: 1.7rem; color: var(--text); margin-bottom: 10px; }
+    .play-card p { font-size: 0.96rem; max-width: 34ch; }
+    .play-tag {
+      display: inline-block;
+      margin-top: 22px;
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    /* Cursor spotlight card */
+    .play-spot {
+      position: absolute;
+      width: 340px; height: 340px;
+      left: 0; top: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--gold-soft) 0%, transparent 62%);
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: opacity 0.4s var(--ease);
+      pointer-events: none;
+      z-index: 1;
+      will-change: transform;
+    }
+    #playSpotlight:hover .play-spot { opacity: 1; }
+
+    /* Magnetic button */
+    .play-magnet {
+      margin-top: 22px;
+      padding: 14px 30px;
+      border-radius: 100px;
+      border: 1px solid var(--gold);
+      background: transparent;
+      color: var(--gold);
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      will-change: transform;
+      transition: background 0.4s var(--ease), color 0.4s var(--ease);
+    }
+    .play-magnet:hover { background: var(--gold); color: #0a0a0a; }
+
+    /* Draggable dial */
+    .play-dial-wrap { margin-top: 24px; }
+    .play-dial {
+      width: 92px; height: 92px;
+      border-radius: 50%;
+      border: 1px solid var(--gold-line);
+      background:
+        radial-gradient(circle at 50% 50%, var(--gold-soft), transparent 70%),
+        var(--bg-soft);
+      position: relative;
+      cursor: grab;
+      touch-action: none;
+      will-change: transform;
+    }
+    .play-dial:active { cursor: grabbing; }
+    .play-dial-mark {
+      position: absolute;
+      top: 8px; left: 50%;
+      width: 6px; height: 20px;
+      margin-left: -3px;
+      border-radius: 3px;
+      background: var(--gold);
+    }
+
+    /* ============================================================
        15. RESPONSIVE
        ============================================================ */
     @media (max-width: 900px) {
@@ -1131,7 +1329,13 @@
       .quote-grid,
       .dm-grid,
       .dm-about,
-      .dm-feat-grid { grid-template-columns: 1fr; }
+      .dm-feat-grid,
+      .play-grid { grid-template-columns: 1fr; }
+
+      /* Shorter scroll-run for the 3D showcase on phones */
+      .showcase { height: 260vh; }
+      .playground { padding: 110px 0 120px; }
+      .play-card { min-height: 260px; padding: 32px 26px; }
 
       /* Two-up gallery reads better than four on a phone */
       .dm-gallery { grid-template-columns: repeat(2, 1fr); }
@@ -1177,18 +1381,597 @@
       html { scroll-behavior: auto; }
       .reveal { opacity: 1 !important; }
     }
+
+    /* ============================================================
+       16. AWWWARDS ENHANCEMENT LAYER
+       Each block below powers one section's signature motion.
+       All effects are transform/opacity based and GPU-composited.
+       ============================================================ */
+
+    /* ---- 16.1 Film grain / noise overlay (fixed, very subtle) ---- */
+    .grain {
+      position: fixed;
+      inset: -50%;
+      z-index: 400;
+      pointer-events: none;
+      opacity: 0.05;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      will-change: transform;
+      animation: grainShift 0.6s steps(2) infinite;
+    }
+    @keyframes grainShift {
+      0%   { transform: translate(0, 0); }
+      50%  { transform: translate(-6%, 4%); }
+      100% { transform: translate(4%, -5%); }
+    }
+
+    /* ---- 16.2 Upgraded cursor: contextual label + blend ---- */
+    .cursor-ring {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s ease, background-color 0.4s var(--ease),
+                  border-color 0.4s var(--ease);
+    }
+    .cursor-label {
+      font-family: var(--font-body);
+      font-size: 0.58rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #0a0a0a;
+      opacity: 0;
+      transform: scale(0.6);
+      transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
+      white-space: nowrap;
+    }
+    body.cursor-view .cursor-ring {
+      background: var(--gold);
+      border-color: var(--gold);
+    }
+    body.cursor-view .cursor-label { opacity: 1; transform: scale(1); }
+    body.cursor-view .cursor-dot { opacity: 0; }
+
+    /* ---- 16.3 Nav: hide on scroll-down, animated link ---- */
+    .nav {
+      transition: transform 0.5s var(--ease), background-color 0.5s var(--ease);
+      will-change: transform;
+    }
+    .nav.nav-hidden { transform: translateY(-115%); }
+    .nav-cta { position: relative; }
+    .nav-cta::after {
+      content: "";
+      position: absolute;
+      left: 0; bottom: -4px;
+      width: 100%; height: 1px;
+      background: currentColor;
+      transform: scaleX(0);
+      transform-origin: right center;
+      transition: transform 0.45s var(--ease);
+    }
+    .nav-cta:hover::after { transform: scaleX(1); transform-origin: left center; }
+
+    /* ---- 16.4 SplitType reveal primitives ---- */
+    .split-line { overflow: hidden; }
+    [data-split] .char,
+    [data-split] .word { display: inline-block; will-change: transform; }
+    /* FOUC guard: hide split headings until JS reveals them (only when
+       motion is on — reduced-motion users never get this class). */
+    .pre-reveal .hero h1,
+    .pre-reveal .section-title,
+    .pre-reveal .showcase-head { opacity: 0; }
+
+    /* ---- 16.5 Hero: animated mesh + floating objects ---- */
+    .hero-mesh {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.7;
+      background:
+        radial-gradient(38% 46% at 22% 30%, rgba(201,168,76,0.16), transparent 60%),
+        radial-gradient(34% 44% at 82% 24%, rgba(120,140,255,0.10), transparent 60%),
+        radial-gradient(46% 52% at 68% 82%, rgba(201,168,76,0.10), transparent 62%);
+      background-size: 200% 200%;
+      animation: meshDrift 22s ease-in-out infinite alternate;
+    }
+    @keyframes meshDrift {
+      0%   { background-position: 0% 0%, 100% 0%, 50% 100%; }
+      100% { background-position: 40% 30%, 60% 40%, 30% 60%; }
+    }
+    .hero-floaters { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+    .floater {
+      position: absolute;
+      color: var(--gold);
+      opacity: 0.22;
+      font-size: 1.6rem;
+      will-change: transform;
+      animation: floatDrift 9s ease-in-out infinite;
+    }
+    .floater.f1 { top: 22%; left: 14%; font-size: 2.1rem; animation-delay: 0s; }
+    .floater.f2 { top: 32%; right: 16%; font-size: 1.3rem; animation-delay: 1.4s; }
+    .floater.f3 { bottom: 26%; left: 22%; font-size: 2.6rem; opacity: 0.14; animation-delay: 0.8s; }
+    .floater.f4 { bottom: 30%; right: 20%; font-size: 1.1rem; animation-delay: 2.1s; }
+    .floater.f5 { top: 60%; left: 48%; font-size: 1.4rem; opacity: 0.16; animation-delay: 1.1s; }
+    @keyframes floatDrift {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50%      { transform: translateY(-22px) rotate(8deg); }
+    }
+
+    /* ---- 16.6 Capabilities: animated conic gradient border + layout ---- */
+    /* Rebalance: icon at the TOP, tighter rhythm, no stranded glyph. */
+    .cap-card {
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 40px 36px 42px;
+      min-height: 316px;
+      background: linear-gradient(165deg, #171717, #0f0f0f);
+    }
+    .cap-card .cap-mark {
+      order: -1;
+      margin: 0 0 30px;
+      width: 58px; height: 58px;
+      font-size: 1.6rem;
+      border-radius: 15px;
+    }
+    .cap-card .cap-index { font-size: 0.9rem; opacity: 0.75; }
+    .cap-card h3 { margin: 8px 0 14px; font-size: 2rem; }
+    .cap-card p { font-size: 0.98rem; }
+    .cap-card::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: 17px;
+      padding: 1px;
+      background: conic-gradient(from var(--angle, 0deg),
+                  transparent 0deg, var(--gold) 70deg, transparent 150deg,
+                  transparent 210deg, rgba(201,168,76,0.5) 290deg, transparent 360deg);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.5s var(--ease);
+      z-index: -1;
+      pointer-events: none;
+    }
+    .cap-card:hover::before { opacity: 1; animation: borderSpin 4s linear infinite; }
+    @property --angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+    @keyframes borderSpin { to { --angle: 360deg; } }
+
+    /* ---- 16.7 Marquee band (scroll-velocity reactive) ---- */
+    .marquee-band {
+      position: relative;
+      z-index: 2;
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-soft);
+      overflow: hidden;
+    }
+    .marquee { display: flex; width: max-content; will-change: transform; }
+    .marquee-track {
+      display: flex;
+      align-items: center;
+      gap: 34px;
+      padding-right: 34px;
+      flex-shrink: 0;
+    }
+    .marquee-track span {
+      font-family: var(--font-head);
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+    }
+    .marquee-track .dot { color: var(--gold); font-size: 1.2rem; }
+
+    /* ---- 16.8 Stats: counters + progress rings ---- */
+    .stats { padding: 150px 0; position: relative; z-index: 2; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      margin-top: 70px;
+    }
+    .stat-card {
+      padding: 40px 28px;
+      border-radius: 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    .stat-ring {
+      position: relative;
+      width: 120px; height: 120px;
+      margin: 0 auto 26px;
+    }
+    .stat-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .stat-ring .ring-bg { fill: none; stroke: var(--border); stroke-width: 6; }
+    .stat-ring .ring-fg {
+      fill: none;
+      stroke: var(--gold);
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-dasharray: 327;      /* 2πr, r=52 */
+      stroke-dashoffset: 327;     /* hidden until animated */
+      filter: drop-shadow(0 0 6px rgba(201,168,76,0.4));
+    }
+    .stat-num {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-size: 1.9rem;
+      color: var(--text);
+    }
+    .stat-num i { font-style: normal; font-size: 1rem; color: var(--gold); margin-left: 2px; }
+    .stat-card h3 { font-size: 1.35rem; color: var(--text); margin-bottom: 8px; }
+    .stat-card p { font-size: 0.9rem; }
+
+    /* ---- 16.9 Before / After comparison ---- */
+    .compare-sec { padding: 150px 0; position: relative; z-index: 2; }
+    .compare {
+      position: relative;
+      margin-top: 60px;
+      height: 460px;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      user-select: none;
+      touch-action: pan-y;
+    }
+    .compare-panel { position: absolute; inset: 0; overflow: hidden; }
+    .compare-before {
+      z-index: 2;
+      width: 50%;                 /* JS updates this live */
+      border-right: 2px solid var(--gold);
+    }
+    .compare-tag {
+      position: absolute; top: 18px; left: 18px; z-index: 5;
+      font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--text); background: rgba(0,0,0,0.5);
+      padding: 6px 12px; border-radius: 100px; border: 1px solid var(--border);
+    }
+    .compare-after .compare-tag { left: auto; right: 18px; }
+    .compare-handle {
+      position: absolute; top: 0; bottom: 0; left: 50%; z-index: 6;
+      width: 2px; background: var(--gold); transform: translateX(-1px);
+      cursor: ew-resize;
+    }
+    .compare-knob {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--gold); color: #0a0a0a;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; box-shadow: 0 8px 24px -6px rgba(0,0,0,0.8);
+    }
+    /* AFTER — the premium mock */
+    .compare-after { background: linear-gradient(160deg, #141414, #0c0c0c); }
+    .ca-window { position: absolute; inset: 0; padding: 60px 30px 26px; display: flex; flex-direction: column; }
+    .ca-nav { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--text-dim); }
+    .ca-nav b { font-family: var(--font-head); font-size: 1.3rem; color: var(--text); }
+    .ca-nav b i { color: var(--gold); font-style: normal; }
+    .ca-hero { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 16px; }
+    .ca-badge {
+      align-self: flex-start; font-size: 0.62rem; letter-spacing: 0.24em; text-transform: uppercase;
+      color: var(--gold); border: 1px solid var(--gold-line); padding: 6px 14px; border-radius: 100px;
+    }
+    .ca-title { font-family: var(--font-head); font-size: clamp(2rem, 5vw, 3.4rem); color: var(--text); }
+    .ca-cta { align-self: flex-start; background: var(--gold); color: #0a0a0a; font-weight: 600; font-size: 0.85rem; padding: 12px 24px; border-radius: 100px; }
+    .ca-row { display: flex; gap: 12px; }
+    .ca-row span { flex: 1; height: 56px; border-radius: 12px; background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01)); border: 1px solid var(--border); }
+    /* BEFORE — the dull template */
+    .compare-before { background: #e9e9ec; }
+    .cb-window { position: absolute; inset: 0; padding: 54px 20px 20px; display: flex; flex-direction: column; color: #333; width: 200%; }
+    .cb-nav { border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+    .cb-nav b { font-family: Arial, sans-serif; font-size: 1.1rem; color: #1a4; }
+    .cb-hero { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 14px; font-family: Arial, sans-serif; }
+    .cb-title { font-size: 1.6rem; font-weight: 700; color: #222; }
+    .cb-text { font-size: 0.95rem; color: #555; }
+    .cb-btn { align-self: flex-start; background: #1a73e8; color: #fff; font-family: Arial, sans-serif; font-size: 0.85rem; padding: 10px 18px; border-radius: 4px; }
+    .cb-row { display: flex; gap: 10px; }
+    .cb-row span { flex: 1; height: 50px; border-radius: 4px; background: #d5d5d8; border: 1px solid #c2c2c5; }
+
+    /* ---- 16.10 Process: SVG timeline path draw + richer steps ---- */
+    .timeline-svg {
+      position: absolute; top: 12px; left: 8%; width: 84%; height: 40px;
+      z-index: 0; overflow: visible;
+    }
+    #timelinePath {
+      stroke-dasharray: 1;         /* set precisely by JS */
+      stroke-dashoffset: 1;
+    }
+    .timeline-spark {
+      position: absolute; top: 32px; left: 8%;
+      width: 14px; height: 14px; margin: -7px 0 0 -7px;
+      border-radius: 50%; background: var(--gold);
+      box-shadow: 0 0 18px 5px rgba(201,168,76,0.7);
+      z-index: 2; opacity: 0; pointer-events: none;
+    }
+    /* Bigger, glowing step markers with a soft pulse */
+    .step-dot {
+      position: relative;
+      width: 64px; height: 64px;
+      background: radial-gradient(circle at 50% 38%, rgba(201,168,76,0.20), var(--bg) 72%);
+      border: 1px solid var(--gold);
+      box-shadow: 0 0 0 6px rgba(201,168,76,0.05), 0 14px 34px -12px rgba(201,168,76,0.5);
+      margin-bottom: 26px;
+      z-index: 1;
+    }
+    .step-num { font-family: var(--font-head); font-size: 1.5rem; color: var(--gold); }
+    .step-eyebrow {
+      display: block; font-size: 0.66rem; letter-spacing: 0.24em;
+      text-transform: uppercase; color: var(--gold); margin-bottom: 10px;
+    }
+    .step:hover .step-dot { animation: dotPulse 1.6s var(--ease) infinite; }
+    @keyframes dotPulse {
+      0%, 100% { box-shadow: 0 0 0 6px rgba(201,168,76,0.05), 0 14px 34px -12px rgba(201,168,76,0.5); }
+      50%      { box-shadow: 0 0 0 12px rgba(201,168,76,0.0), 0 14px 34px -12px rgba(201,168,76,0.7); }
+    }
+
+    /* ---- 16.11 Testimonials: full-bleed drag marquee ---- */
+    .testimonials { overflow: hidden; }
+    .quote-rail {
+      margin-top: 60px;
+      overflow: hidden;
+      cursor: grab;
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+              mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    }
+    .quote-rail.grabbing { cursor: grabbing; }
+    .quote-rail-track { display: flex; gap: 28px; width: max-content; will-change: transform; padding: 0 32px; }
+    .quote-rail-track .quote-card {
+      width: 440px; max-width: 78vw; flex-shrink: 0;
+      opacity: 1;                  /* not part of .reveal fade */
+    }
+
+    /* ---- 16.12 Logo slider (infinite) ---- */
+    .logos { padding: 70px 0 90px; position: relative; z-index: 2; }
+    .logos-label {
+      text-align: center; font-size: 0.72rem; letter-spacing: 0.24em;
+      text-transform: uppercase; color: var(--text-dim); margin-bottom: 40px;
+    }
+    .logo-slider {
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+              mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    }
+    .logo-track {
+      display: flex; align-items: center; gap: 64px; width: max-content;
+      animation: logoScroll 26s linear infinite; will-change: transform;
+    }
+    .logo-track span {
+      font-family: var(--font-head); font-size: 1.7rem; font-weight: 600;
+      color: var(--text-dim); opacity: 0.6; white-space: nowrap;
+      transition: color 0.4s var(--ease), opacity 0.4s var(--ease);
+    }
+    .logo-track span:hover { color: var(--gold); opacity: 1; }
+    @keyframes logoScroll { to { transform: translateX(-50%); } }
+
+    /* ---- 16.13 FAQ accordion ---- */
+    .faq { padding: 40px 0 160px; position: relative; z-index: 2; }
+    .faq-list { margin-top: 60px; max-width: 820px; }
+    .faq-item { border-bottom: 1px solid var(--border); }
+    .faq-q {
+      width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 20px;
+      background: none; border: none; cursor: pointer; text-align: left;
+      padding: 30px 4px; color: var(--text);
+      font-family: var(--font-head); font-size: clamp(1.2rem, 2.6vw, 1.6rem);
+      transition: color 0.4s var(--ease);
+    }
+    .faq-q:hover { color: var(--gold); }
+    .faq-icon { position: relative; width: 18px; height: 18px; flex-shrink: 0; }
+    .faq-icon::before, .faq-icon::after {
+      content: ""; position: absolute; top: 50%; left: 50%; background: var(--gold);
+      transform: translate(-50%, -50%); transition: transform 0.45s var(--ease);
+    }
+    .faq-icon::before { width: 16px; height: 1.5px; }
+    .faq-icon::after  { width: 1.5px; height: 16px; }
+    .faq-item.open .faq-icon::after { transform: translate(-50%, -50%) scaleY(0); }
+    .faq-a { height: 0; overflow: hidden; will-change: height; transition: height 0.55s var(--ease); }
+    .faq-a-inner { padding: 0 4px 30px; }
+    .faq-a-inner p { font-size: 1rem; line-height: 1.7; max-width: 62ch; }
+
+    /* ---- 16.14 Contact: animated mesh + ripple ---- */
+    .contact { overflow: hidden; }
+    .contact-mesh {
+      position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.6;
+      background:
+        radial-gradient(30% 40% at 30% 40%, rgba(201,168,76,0.18), transparent 60%),
+        radial-gradient(30% 40% at 72% 66%, rgba(120,140,255,0.10), transparent 60%),
+        radial-gradient(40% 50% at 50% 100%, rgba(201,168,76,0.12), transparent 60%);
+      background-size: 180% 180%;
+      animation: meshDrift 18s ease-in-out infinite alternate;
+    }
+    .contact .wrap { position: relative; z-index: 2; }
+    .ripple { position: relative; overflow: hidden; }
+    .ripple .rip {
+      position: absolute; border-radius: 50%; transform: translate(-50%, -50%) scale(0);
+      background: rgba(255,255,255,0.5); pointer-events: none;
+      animation: rippleGo 0.7s var(--ease) forwards;
+    }
+    @keyframes rippleGo { to { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
+
+    /* ---- 16.15 Demo cards: glass reflection sweep ---- */
+    .demo-card::before {
+      content: "";
+      position: absolute; inset: 0; z-index: 3; pointer-events: none;
+      background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.10) 46%, transparent 62%);
+      transform: translateX(-120%);
+      transition: transform 0.7s var(--ease);
+    }
+    .demo-card:hover::before { transform: translateX(120%); }
+
+    /* ---- 16.17 Demo cards: mini "site preview" thumbnail ---- */
+    .demo-card { justify-content: flex-start; }
+    .demo-thumb {
+      position: relative;
+      margin: 20px 0 auto;
+      border-radius: 11px;
+      border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+      background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 12%, #101010), #0c0c0c);
+      padding: 26px 14px 14px;
+      display: flex; flex-direction: column; gap: 9px;
+      overflow: hidden;
+      transition: transform 0.6s var(--ease);
+    }
+    .demo-thumb::before {              /* browser dots */
+      content: "";
+      position: absolute; top: 11px; left: 14px;
+      width: 6px; height: 6px; border-radius: 50%;
+      color: color-mix(in srgb, var(--accent) 70%, transparent);
+      background: currentColor;
+      box-shadow: 12px 0 0 color-mix(in srgb, var(--accent) 40%, transparent),
+                  24px 0 0 rgba(255,255,255,0.12);
+    }
+    .demo-thumb i { display: block; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.07); }
+    .demo-thumb i:nth-child(1) { width: 66%; height: 15px; background: color-mix(in srgb, var(--accent) 55%, transparent); }
+    .demo-thumb i:nth-child(2) { width: 100%; }
+    .demo-thumb i:nth-child(3) { width: 44%; }
+    .demo-card:hover .demo-thumb { transform: translateY(-4px) scale(1.02); }
+    .demo-meta { margin-top: 18px; }
+
+    /* ---- 16.18 Playground: balanced cards with faint watermark ---- */
+    .play-card { min-height: 260px; overflow: hidden; }
+    .play-body { align-self: center; }
+    .play-card > .play-body { margin-top: auto; margin-bottom: auto; }
+    .play-watermark {
+      position: absolute; right: -10px; bottom: -24px;
+      font-size: 8rem; line-height: 1; opacity: 0.05; pointer-events: none;
+      color: var(--gold); z-index: 0;
+    }
+
+    /* ---- 16.19 Logo slider as premium chips ---- */
+    .logo-track span {
+      font-family: var(--font-body);
+      font-size: 0.95rem; font-weight: 500;
+      letter-spacing: 0.02em;
+      padding: 11px 22px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+      color: var(--text-dim);
+      opacity: 1;
+    }
+    .logo-track { gap: 20px; }
+    .logo-track span:hover { color: var(--gold); border-color: var(--gold-line); }
+
+    /* ---- 16.20 Testimonial avatars → gold monogram ---- */
+    .quote-avatar {
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-head); font-weight: 600; font-size: 1.1rem;
+      color: var(--gold);
+      background: radial-gradient(circle at 50% 40%, rgba(201,168,76,0.22), rgba(201,168,76,0.06));
+    }
+
+    /* ---- 16.21 Contact: secondary line + email ---- */
+    .contact-alt { margin-top: 26px; font-size: 0.92rem; color: var(--text-dim); }
+    .contact-alt a { color: var(--gold); border-bottom: 1px solid var(--gold-line); padding-bottom: 1px; }
+    .contact-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.66rem; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 30px;
+    }
+    .contact-badge .pip {
+      width: 8px; height: 8px; border-radius: 50%; background: #5FBF77;
+      box-shadow: 0 0 0 0 rgba(95,191,119,0.6); animation: pip 2.2s var(--ease) infinite;
+    }
+    @keyframes pip {
+      0%   { box-shadow: 0 0 0 0 rgba(95,191,119,0.6); }
+      70%  { box-shadow: 0 0 0 10px rgba(95,191,119,0); }
+      100% { box-shadow: 0 0 0 0 rgba(95,191,119,0); }
+    }
+
+    /* ---- 16.22 Kinetic footer ---- */
+    .foot-big {
+      position: relative;
+      border-top: 1px solid var(--border);
+      padding: 90px 0 40px;
+      overflow: hidden;
+    }
+    .foot-word {
+      font-family: var(--font-head);
+      font-weight: 600;
+      font-size: clamp(4rem, 20vw, 16rem);
+      line-height: 0.9;
+      letter-spacing: -0.02em;
+      text-align: center;
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(240,240,240,0.14);
+      margin-bottom: 40px;
+      user-select: none;
+    }
+    .foot-word b { color: var(--gold); -webkit-text-stroke: 0; }
+    .foot-row {
+      max-width: var(--max); margin: 0 auto; padding: 0 32px;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 20px;
+    }
+    .foot-links { display: flex; gap: 26px; flex-wrap: wrap; }
+    .foot-links a {
+      position: relative; font-size: 0.88rem; color: var(--text-dim);
+      transition: color 0.4s var(--ease);
+    }
+    .foot-links a:hover { color: var(--text); }
+    .foot-copy { font-size: 0.8rem; color: var(--text-dim); letter-spacing: 0.04em; }
+
+    /* ---- 16.23 Marquee: alternating outline words for tension ---- */
+    .marquee-track span:nth-child(4n+1) {
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(240,240,240,0.5);
+    }
+
+    /* ---- 16.16 Responsive for the new sections ---- */
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
+      .stats { padding: 100px 0; }
+      .compare-sec { padding: 100px 0; }
+      .compare { height: 380px; }
+      .stat-card { padding: 30px 20px; }
+      .marquee-band { padding: 28px 0; }
+      .faq { padding: 30px 0 110px; }
+      .quote-rail-track .quote-card { width: 300px; }
+      /* Horizontal timeline connector doesn't apply to a stacked layout */
+      .timeline-svg, .timeline-spark { display: none; }
+      .cap-card { min-height: auto; }
+      .foot-big { padding: 60px 0 30px; }
+      .foot-row { flex-direction: column; text-align: center; gap: 24px; }
+    }
+    @media (max-width: 560px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .grain, .hero-mesh, .contact-mesh, .floater,
+      .logo-track, .cap-card:hover::before { animation: none !important; }
+      .marquee { transform: none !important; }
+    }
   </style>
 </head>
 
 <body>
-  <!-- Scroll-driven 3D object lives on this fixed canvas (behind content) -->
-  <canvas id="bg3d" aria-hidden="true"></canvas>
+  <!-- The immersive WebGL world (single persistent scene the camera
+       travels through) lives on this one fixed canvas behind all content. -->
+  <canvas id="world" aria-hidden="true"></canvas>
+
+  <!-- Atmosphere colour-grade: a per-world vignette tint the WebGL layer
+       cross-fades as the camera travels (sits above the canvas, below content). -->
+  <div class="atmos" id="atmos" aria-hidden="true"></div>
 
   <!-- Reading-progress bar -->
   <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
 
+  <!-- Film-grain / noise overlay (fixed, GPU, subtle) -->
+  <div class="grain" aria-hidden="true"></div>
+
   <!-- Custom cursor elements (desktop only; hidden on touch) -->
-  <div class="cursor-ring" aria-hidden="true"></div>
+  <div class="cursor-ring" aria-hidden="true"><span class="cursor-label"></span></div>
   <div class="cursor-dot" aria-hidden="true"></div>
 
   <!-- ================= NAV ================= -->
@@ -1199,9 +1982,19 @@
 
   <!-- ================= HERO ================= -->
   <header class="hero" id="top">
+    <div class="hero-mesh" aria-hidden="true"></div>
     <div class="hero-glow" aria-hidden="true"></div>
     <div class="hero-ring r1" aria-hidden="true"></div>
     <div class="hero-ring r2" aria-hidden="true"></div>
+
+    <!-- Floating decorative objects (parallax + drift) -->
+    <div class="hero-floaters" aria-hidden="true">
+      <span class="floater f1" data-depth="0.10">◆</span>
+      <span class="floater f2" data-depth="0.18">✦</span>
+      <span class="floater f3" data-depth="0.06">◯</span>
+      <span class="floater f4" data-depth="0.22">▲</span>
+      <span class="floater f5" data-depth="0.14">✕</span>
+    </div>
 
     <div class="hero-card" id="heroCard">
       <span class="eyebrow">Web Development Studio</span>
@@ -1250,6 +2043,80 @@
     </div>
   </section>
 
+  <!-- ================= MARQUEE (scroll-velocity reactive) ================= -->
+  <section class="marquee-band" aria-hidden="true">
+    <div class="marquee" id="marquee">
+      <div class="marquee-track">
+        <span>Design</span><span class="dot">✦</span><span>Motion</span><span class="dot">✦</span>
+        <span>Development</span><span class="dot">✦</span><span>Interaction</span><span class="dot">✦</span>
+        <span>Performance</span><span class="dot">✦</span><span>Strategy</span><span class="dot">✦</span>
+      </div>
+      <div class="marquee-track" aria-hidden="true">
+        <span>Design</span><span class="dot">✦</span><span>Motion</span><span class="dot">✦</span>
+        <span>Development</span><span class="dot">✦</span><span>Interaction</span><span class="dot">✦</span>
+        <span>Performance</span><span class="dot">✦</span><span>Strategy</span><span class="dot">✦</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STATS (counters + progress rings) ================= -->
+  <section class="stats" id="numbers">
+    <div class="wrap">
+      <span class="eyebrow reveal">By The Numbers</span>
+      <h2 class="section-title reveal">Results we're proud of.</h2>
+
+      <div class="stats-grid">
+        <article class="stat-card reveal">
+          <div class="stat-ring" data-value="98">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+              <circle class="ring-fg" cx="60" cy="60" r="52"></circle>
+            </svg>
+            <div class="stat-num"><span class="count" data-count="98">0</span><i>%</i></div>
+          </div>
+          <h3>Client satisfaction</h3>
+          <p>Measured across every project we've shipped.</p>
+        </article>
+
+        <article class="stat-card reveal">
+          <div class="stat-ring" data-value="92">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+              <circle class="ring-fg" cx="60" cy="60" r="52"></circle>
+            </svg>
+            <div class="stat-num"><span class="count" data-count="60">0</span><i>fps</i></div>
+          </div>
+          <h3>Silky performance</h3>
+          <p>Interfaces engineered to stay smooth on every device.</p>
+        </article>
+
+        <article class="stat-card reveal">
+          <div class="stat-ring" data-value="100">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+              <circle class="ring-fg" cx="60" cy="60" r="52"></circle>
+            </svg>
+            <div class="stat-num"><span class="count" data-count="1.2" data-decimals="1">0</span><i>s</i></div>
+          </div>
+          <h3>Average load time</h3>
+          <p>Fast first paint that keeps visitors from leaving.</p>
+        </article>
+
+        <article class="stat-card reveal">
+          <div class="stat-ring" data-value="85">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+              <circle class="ring-fg" cx="60" cy="60" r="52"></circle>
+            </svg>
+            <div class="stat-num"><span class="count" data-count="40">0</span><i>+</i></div>
+          </div>
+          <h3>Businesses online</h3>
+          <p>Indian brands now working while their owners sleep.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
   <!-- ================= INDUSTRY DEMOS ================= -->
   <section class="demos" id="work">
     <div class="wrap">
@@ -1262,6 +2129,7 @@
                  style="--accent:#E4572E; --accent-soft:rgba(228,87,46,0.20)">
           <div class="overlay"></div>
           <div class="demo-icon">🍽</div>
+          <div class="demo-thumb" aria-hidden="true"><i></i><i></i><i></i></div>
           <div class="demo-meta">
             <span class="demo-type">Restaurant</span>
             <div class="demo-name">Saffron Table</div>
@@ -1274,6 +2142,7 @@
                  style="--accent:#3FA7D6; --accent-soft:rgba(63,167,214,0.20)">
           <div class="overlay"></div>
           <div class="demo-icon">✚</div>
+          <div class="demo-thumb" aria-hidden="true"><i></i><i></i><i></i></div>
           <div class="demo-meta">
             <span class="demo-type">Medical Clinic</span>
             <div class="demo-name">Prisha Care</div>
@@ -1286,6 +2155,7 @@
                  style="--accent:#C879C4; --accent-soft:rgba(200,121,196,0.20)">
           <div class="overlay"></div>
           <div class="demo-icon">◈</div>
+          <div class="demo-thumb" aria-hidden="true"><i></i><i></i><i></i></div>
           <div class="demo-meta">
             <span class="demo-type">Boutique &amp; Fashion</span>
             <div class="demo-name">Maison Rue</div>
@@ -1298,12 +2168,55 @@
                  style="--accent:#5FBF77; --accent-soft:rgba(95,191,119,0.20)">
           <div class="overlay"></div>
           <div class="demo-icon">✎</div>
+          <div class="demo-thumb" aria-hidden="true"><i></i><i></i><i></i></div>
           <div class="demo-meta">
             <span class="demo-type">Coaching Institute</span>
             <div class="demo-name">Apex Academy</div>
             <button class="demo-preview" type="button" data-hover>Preview</button>
           </div>
         </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BEFORE / AFTER COMPARISON ================= -->
+  <section class="compare-sec" id="transform">
+    <div class="wrap">
+      <span class="eyebrow reveal">The Difference</span>
+      <h2 class="section-title reveal">From ordinary to unforgettable.</h2>
+      <p class="section-lead reveal">Drag the handle. On the left, a typical template. On the right, what we build.</p>
+
+      <div class="compare reveal" id="compare">
+        <!-- AFTER (full, underneath) -->
+        <div class="compare-panel compare-after">
+          <span class="compare-tag">After</span>
+          <div class="ca-window">
+            <div class="ca-nav"><b>Lumière<i>.</i></b><span>Menu · Reserve · Contact</span></div>
+            <div class="ca-hero">
+              <div class="ca-badge">Fine Dining</div>
+              <div class="ca-title">Plated like art.</div>
+              <div class="ca-cta">Reserve a Table →</div>
+            </div>
+            <div class="ca-row"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+        <!-- BEFORE (clipped, on top) -->
+        <div class="compare-panel compare-before" id="compareBefore">
+          <span class="compare-tag">Before</span>
+          <div class="cb-window">
+            <div class="cb-nav"><b>My Restaurant</b></div>
+            <div class="cb-hero">
+              <div class="cb-title">Welcome to our website</div>
+              <div class="cb-text">We serve food. Call us to book a table.</div>
+              <div class="cb-btn">Click Here</div>
+            </div>
+            <div class="cb-row"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+        <!-- Handle -->
+        <div class="compare-handle" id="compareHandle">
+          <div class="compare-knob"><span>⟺</span></div>
+        </div>
       </div>
     </div>
   </section>
@@ -1315,22 +2228,30 @@
       <h2 class="section-title reveal">Three simple steps to launch.</h2>
 
       <div class="timeline">
-        <div class="timeline-line" id="timelineLine"></div>
+        <!-- SVG connector that draws itself in on scroll (path drawing) -->
+        <svg class="timeline-svg" id="timelineSvg" viewBox="0 0 1000 60" preserveAspectRatio="none" aria-hidden="true">
+          <path id="timelinePath" d="M 40 30 L 960 30" fill="none" stroke="var(--gold-line)" stroke-width="1.5" />
+        </svg>
+        <!-- Glowing spark that rides the line as it draws -->
+        <div class="timeline-spark" id="timelineSpark" aria-hidden="true"></div>
 
         <article class="step reveal">
-          <div class="step-dot">1</div>
+          <div class="step-dot"><span class="step-num">01</span></div>
+          <span class="step-eyebrow">Discovery</span>
           <h3>You Share Your Vision</h3>
           <p>Tell us about your business and goals. We listen closely and map out exactly what your website needs to do.</p>
         </article>
 
         <article class="step reveal">
-          <div class="step-dot">2</div>
+          <div class="step-dot"><span class="step-num">02</span></div>
+          <span class="step-eyebrow">Craft</span>
           <h3>We Design &amp; Build</h3>
           <p>We craft a custom, polished experience — designing, building, and refining every detail until it feels premium.</p>
         </article>
 
         <article class="step reveal">
-          <div class="step-dot">3</div>
+          <div class="step-dot"><span class="step-num">03</span></div>
+          <span class="step-eyebrow">Launch</span>
           <h3>You Launch &amp; Grow</h3>
           <p>We handle the launch and hand you a fast, elegant site that works around the clock to bring in customers.</p>
         </article>
@@ -1338,54 +2259,103 @@
     </div>
   </section>
 
-  <!-- ================= TESTIMONIALS ================= -->
+  <!-- ================= TESTIMONIALS (draggable marquee) ================= -->
   <section class="testimonials" id="voices">
     <div class="wrap">
       <span class="eyebrow reveal">Client Voices</span>
       <h2 class="section-title reveal">Work that speaks for itself.</h2>
+    </div>
 
-      <div class="quote-grid">
-        <figure class="quote-card reveal">
+    <!-- Auto-scrolling, drag-to-scrub rail (extends full-bleed) -->
+    <div class="quote-rail" id="quoteRail">
+      <div class="quote-rail-track" id="quoteTrack">
+        <figure class="quote-card">
           <span class="quote-mark">“</span>
           <blockquote>Our bookings doubled within two months of launching. The site feels like it belongs to a brand ten times our size.</blockquote>
-          <figcaption class="quote-author">
-            <div class="quote-avatar"></div>
-            <div>
-              <strong>Ananya Mehta</strong>
-              <span>Owner, Saffron Table</span>
-            </div>
-          </figcaption>
+          <figcaption class="quote-author"><div class="quote-avatar">AM</div><div><strong>Ananya Mehta</strong><span>Owner, Saffron Table</span></div></figcaption>
         </figure>
-
-        <figure class="quote-card reveal">
+        <figure class="quote-card">
           <span class="quote-mark">“</span>
           <blockquote>They understood exactly what we needed and delivered something genuinely beautiful — and it loads instantly, even on my phone.</blockquote>
-          <figcaption class="quote-author">
-            <div class="quote-avatar"></div>
-            <div>
-              <strong>Rohan Iyer</strong>
-              <span>Director, Apex Academy</span>
-            </div>
-          </figcaption>
+          <figcaption class="quote-author"><div class="quote-avatar">RI</div><div><strong>Rohan Iyer</strong><span>Director, Apex Academy</span></div></figcaption>
         </figure>
+        <figure class="quote-card">
+          <span class="quote-mark">“</span>
+          <blockquote>The animations made people stop and stare. Customers keep telling us the website feels expensive — exactly the impression we wanted.</blockquote>
+          <figcaption class="quote-author"><div class="quote-avatar">MK</div><div><strong>Meher Kapoor</strong><span>Founder, Maison Rue</span></div></figcaption>
+        </figure>
+        <figure class="quote-card">
+          <span class="quote-mark">“</span>
+          <blockquote>Enquiries tripled. It finally looks like the serious clinic we always were. Worth every rupee and then some.</blockquote>
+          <figcaption class="quote-author"><div class="quote-avatar">NR</div><div><strong>Dr. Nikhil Rao</strong><span>Prisha Care</span></div></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FAQ (smooth accordion) ================= -->
+  <section class="faq" id="faq">
+    <div class="wrap">
+      <span class="eyebrow reveal">Good To Know</span>
+      <h2 class="section-title reveal">Questions, answered.</h2>
+
+      <div class="faq-list">
+        <div class="faq-item reveal">
+          <button class="faq-q" type="button" aria-expanded="false">
+            <span>How long does a website take?</span><i class="faq-icon" aria-hidden="true"></i>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner"><p>Most projects go live in two to four weeks. Simpler sites can be ready in days; larger, animation-rich builds take a little longer. We agree a clear timeline before we start.</p></div></div>
+        </div>
+        <div class="faq-item reveal">
+          <button class="faq-q" type="button" aria-expanded="false">
+            <span>Will it work well on phones?</span><i class="faq-icon" aria-hidden="true"></i>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner"><p>Always. We design mobile-first, because that's where most of your customers are. Every animation is tuned to stay smooth and touch-friendly on the smallest screens.</p></div></div>
+        </div>
+        <div class="faq-item reveal">
+          <button class="faq-q" type="button" aria-expanded="false">
+            <span>Do you handle hosting and updates?</span><i class="faq-icon" aria-hidden="true"></i>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner"><p>Yes. We can launch on fast, reliable hosting and offer ongoing care plans for updates, content changes and improvements — so you never have to worry about the technical side.</p></div></div>
+        </div>
+        <div class="faq-item reveal">
+          <button class="faq-q" type="button" aria-expanded="false">
+            <span>How much does it cost?</span><i class="faq-icon" aria-hidden="true"></i>
+          </button>
+          <div class="faq-a"><div class="faq-a-inner"><p>It depends on scope, but we tailor packages to Indian businesses of every size. Message us with what you need and we'll send a transparent, itemised quote — no surprises.</p></div></div>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- ================= CONTACT / CTA ================= -->
   <section class="contact" id="contact">
+    <div class="contact-mesh" aria-hidden="true"></div>
     <div class="wrap">
+      <span class="contact-badge reveal"><span class="pip"></span> Available for new projects</span>
       <h2 class="reveal">Ready to get your business online?</h2>
-      <button class="btn-glow" type="button" data-hover>
+      <button class="btn-glow ripple" type="button" data-hover>
         <span class="wa">✆</span> WhatsApp Us
       </button>
+      <p class="contact-alt reveal">Prefer email? <a href="mailto:hello@aureal.studio" data-hover>hello@aureal.studio</a></p>
       <p class="contact-note reveal">Typically replies within a few hours.</p>
     </div>
   </section>
 
-  <footer class="foot wrap">
-    <div class="brand" style="font-size:1.2rem">Aureal<span>.</span></div>
-    <div>Premium websites for Indian businesses.</div>
+  <!-- ================= KINETIC FOOTER ================= -->
+  <footer class="foot-big">
+    <div class="foot-word" aria-hidden="true">Aureal<b>.</b></div>
+    <div class="foot-row">
+      <div class="brand" style="font-size:1.2rem">Aureal<span>.</span></div>
+      <nav class="foot-links">
+        <a href="#work" data-hover>Work</a>
+        <a href="#process" data-hover>Process</a>
+        <a href="#faq" data-hover>FAQ</a>
+        <a href="#contact" data-hover>Contact</a>
+        <a href="#top" data-hover>Back to top ↑</a>
+      </nav>
+      <div class="foot-copy">© 2026 Aureal — Premium websites for Indian businesses.</div>
+    </div>
   </footer>
 
   <!-- Industry demo mini-sites mount here (built on demand by JS) -->
@@ -1396,9 +2366,28 @@
        ============================================================ -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-  <!-- Real 3D (scroll-driven object) + buttery smooth scrolling -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Buttery smooth scrolling -->
   <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
+  <!-- SplitType: split headings into chars/words for reveal animations -->
+  <script src="https://cdn.jsdelivr.net/npm/split-type@0.3.4/umd/index.min.js"></script>
+
+  <!-- Three.js (r128) + postprocessing/env addons for the immersive WebGL
+       world, loaded as CLASSIC scripts (attach to the global THREE) so the
+       experience runs on every host — including htmlpreview, which ignores
+       injected ES-module import maps. Order matters: shaders → passes. -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/BokehShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/GammaCorrectionShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/Pass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/MaskPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/BokehPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/environments/RoomEnvironment.js"></script>
 
   <script>
     /* ============================================================
@@ -1418,6 +2407,10 @@
       const isDesktop = window.matchMedia("(pointer: fine)").matches &&
                         window.innerWidth > 900;
 
+      // Synchronously hide split headings before first paint so the reveal
+      // never flashes. Removed/overridden the moment JS reveals them.
+      if (!prefersReduced) document.documentElement.classList.add("pre-reveal");
+
       const lerp = (a, b, n) => a + (b - a) * n;
 
       // Cache the max scroll distance. Reading scrollHeight forces a layout,
@@ -1427,6 +2420,7 @@
       function refreshScrollMax() {
         scrollMax = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
       }
+
 
       // Shared hover-cursor scaling. initCursor() wires up the real setter;
       // bindHover() attaches listeners to any [data-hover] element, including
@@ -1566,6 +2560,7 @@
         // ScrollTriggers ever animate the same element's opacity.
         gsap.utils.toArray(".reveal").forEach((el) => {
           if (el.closest(".demo-grid, .quote-grid")) return;
+          if (el.matches(".section-title")) return; // char-revealed separately
           gsap.fromTo(el,
             { opacity: 0, y: 40 },
             {
@@ -1993,7 +2988,7 @@
           .map((g) => `
             <div class="dm-tile">
               <span class="emoji">${g.ic}</span>
-              <span>${g.label}</span>
+              <span class="label">${g.label}</span>
             </div>`)
           .join("");
 
@@ -2125,152 +3120,6 @@
       }
 
       /* --------------------------------------------------------
-         6. SCROLL-DRIVEN 3D OBJECT (Three.js)
-         A faceted gold-wireframe crystal + particle field that
-         travels across the screen and REVERSES direction as you
-         scroll — inspired by scroll-driven hero objects, rebuilt
-         as an abstract centrepiece rather than a copied bike.
-         -------------------------------------------------------- */
-      function init3D() {
-        const canvas = document.getElementById("bg3d");
-        if (!canvas || typeof THREE === "undefined") return;
-
-        const GOLD = 0xc9a84c;
-        let width = window.innerWidth, height = window.innerHeight;
-        let isMobile = width < 768;
-
-        let renderer;
-        try {
-          renderer = new THREE.WebGLRenderer({
-            canvas, alpha: true, antialias: !isMobile, powerPreference: "high-performance",
-          });
-        } catch (e) { return; } // no WebGL — bail gracefully
-        // Cap pixel ratio: full DPR fullscreen WebGL is what strains weaker
-        // laptop GPUs and starves the scroll thread. 1.5 looks crisp for far less cost.
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-        renderer.setSize(width, height);
-
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-        // Pull the camera in a touch on phones so the crystal reads large & clear.
-        camera.position.z = isMobile ? 5.6 : 7;
-
-        // The travelling crystal
-        const group = new THREE.Group();
-        scene.add(group);
-
-        const geo = new THREE.IcosahedronGeometry(1.7, 1);
-        const core = new THREE.Mesh(
-          geo,
-          new THREE.MeshStandardMaterial({
-            color: 0x141414, metalness: 0.65, roughness: 0.32,
-            flatShading: true, transparent: true, opacity: isMobile ? 0.92 : 0.85,
-          })
-        );
-        group.add(core);
-
-        const wire = new THREE.LineSegments(
-          new THREE.EdgesGeometry(geo),
-          new THREE.LineBasicMaterial({
-            color: GOLD, transparent: true, opacity: isMobile ? 0.75 : 0.55,
-          })
-        );
-        group.add(wire);
-
-        // Floating particle field
-        const pCount = isMobile ? 180 : 480;
-        const pGeo = new THREE.BufferGeometry();
-        const pos = new Float32Array(pCount * 3);
-        for (let i = 0; i < pCount; i++) {
-          pos[i * 3]     = (Math.random() - 0.5) * 24;
-          pos[i * 3 + 1] = (Math.random() - 0.5) * 16;
-          pos[i * 3 + 2] = (Math.random() - 0.5) * 16 - 4;
-        }
-        pGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-        const particles = new THREE.Points(
-          pGeo,
-          new THREE.PointsMaterial({
-            color: GOLD, size: isMobile ? 0.05 : 0.035, transparent: true,
-            opacity: isMobile ? 0.7 : 0.55,
-          })
-        );
-        scene.add(particles);
-
-        // Lighting
-        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-        const key = new THREE.PointLight(GOLD, 2.2, 60);
-        key.position.set(5, 5, 6); scene.add(key);
-        const rim = new THREE.PointLight(0x88bbff, 1.0, 60);
-        rim.position.set(-6, -3, 4); scene.add(rim);
-
-        // Bigger on phones so it's unmistakably visible; smaller travel range
-        // so it stays on-screen on narrow viewports.
-        const baseScale = isMobile ? 1.35 : 1;
-        const travelX   = isMobile ? 1.8 : 3.2;
-
-        // Scroll + mouse state (smoothed)
-        let scrollP = 0, mx = 0, my = 0, tmx = 0, tmy = 0;
-        if (isDesktop) {
-          window.addEventListener("mousemove", (e) => {
-            tmx = e.clientX / width - 0.5;
-            tmy = e.clientY / height - 0.5;
-          }, { passive: true });
-        }
-
-        // Render at ~40fps instead of 60. The object is ambient background
-        // motion, so the eye barely notices — but it hands a big slice of the
-        // main thread back to scrolling, which is what was lagging.
-        let last = 0;
-        const minDelta = 1000 / 40;
-
-        function frame(now) {
-          requestAnimationFrame(frame);
-          if (document.hidden) return;
-          if (now - last < minDelta) return;
-          last = now;
-
-          scrollP = lerp(scrollP, Math.min(1, window.scrollY / scrollMax), 0.08);
-          mx = lerp(mx, tmx, 0.05);
-          my = lerp(my, tmy, 0.05);
-          const t = now * 0.001;
-
-          // Continuous spin + scroll adds turns; sine paths reverse direction.
-          group.rotation.y = t * 0.15 + scrollP * Math.PI * 4;
-          group.rotation.x = Math.sin(scrollP * Math.PI * 3) * 0.7 + my * 0.6;
-          group.rotation.z = Math.sin(scrollP * Math.PI * 2) * 0.4;
-
-          // Travel across the viewport, drifting down as the page advances.
-          group.position.x = Math.sin(scrollP * Math.PI * 2) * travelX + mx * 1.2;
-          group.position.y = -scrollP * 2.4 + Math.sin(t * 0.5) * 0.12;
-          group.scale.setScalar(baseScale * (1 - scrollP * 0.3));
-
-          particles.rotation.y = t * 0.02 + scrollP * 0.6;
-          particles.position.y = scrollP * 1.5;
-
-          camera.position.x = mx * 0.8;
-          camera.position.y = -my * 0.6;
-          camera.lookAt(0, 0, 0);
-
-          renderer.render(scene, camera);
-        }
-
-        if (prefersReduced) {
-          renderer.render(scene, camera); // single static frame
-        } else {
-          requestAnimationFrame(frame);
-        }
-        requestAnimationFrame(() => canvas.classList.add("ready"));
-
-        window.addEventListener("resize", () => {
-          width = window.innerWidth; height = window.innerHeight;
-          isMobile = width < 768;
-          camera.aspect = width / height;
-          camera.updateProjectionMatrix();
-          renderer.setSize(width, height);
-        }, { passive: true });
-      }
-
-      /* --------------------------------------------------------
          7. SMOOTH SCROLLING (Lenis) — glides the whole page and
          drives ScrollTrigger for perfectly synced animations.
          -------------------------------------------------------- */
@@ -2336,6 +3185,435 @@
       }
 
       /* --------------------------------------------------------
+         11. SHOWCASE STEP CYCLER — advances the pinned caption in the
+         "A world you scroll through" section based on scroll progress.
+         (The 3D itself now lives in the WebGL world module.)
+         -------------------------------------------------------- */
+      function initShowcaseSteps() {
+        const section = document.getElementById("motion");
+        if (!section) return;
+        const steps = section.querySelectorAll(".showcase-step");
+        if (!steps.length) return;
+        const setStep = (p) => {
+          const idx = p < 0.4 ? 0 : p < 0.72 ? 1 : 2;
+          steps.forEach((s, i) => s.classList.toggle("active", i === idx));
+        };
+        setStep(0);
+        if (prefersReduced) { setStep(0.5); return; }
+        const update = () => {
+          const total = section.offsetHeight - window.innerHeight;
+          const p = total > 0
+            ? Math.min(1, Math.max(0, -section.getBoundingClientRect().top / total))
+            : 0;
+          setStep(p);
+        };
+        window.addEventListener("scroll", update, { passive: true });
+        update();
+      }
+
+      /* --------------------------------------------------------
+         12. INTERACTIVE PLAYGROUND — hands-on widgets: a cursor
+         spotlight, a 3D tilt card, a magnetic button and a
+         momentum dial the visitor can flick.
+         -------------------------------------------------------- */
+      function initPlayground() {
+        // Give each card a faint oversized watermark of its own icon so the
+        // composition never feels empty.
+        document.querySelectorAll(".play-card").forEach((card) => {
+          const ic = card.querySelector(".play-ic");
+          if (!ic || card.querySelector(".play-watermark")) return;
+          const wm = document.createElement("span");
+          wm.className = "play-watermark";
+          wm.setAttribute("aria-hidden", "true");
+          wm.textContent = ic.textContent;
+          card.insertBefore(wm, card.firstChild);
+        });
+
+        // Cursor spotlight
+        const spotCard = document.getElementById("playSpotlight");
+        if (spotCard) {
+          const spot = spotCard.querySelector(".play-spot");
+          spotCard.addEventListener("pointermove", (e) => {
+            const r = spotCard.getBoundingClientRect();
+            spot.style.transform =
+              `translate(${e.clientX - r.left}px, ${e.clientY - r.top}px) translate(-50%, -50%)`;
+          });
+        }
+
+        // 3D tilt card
+        const tilt = document.getElementById("playTilt");
+        if (tilt && isDesktop) {
+          tilt.addEventListener("pointermove", (e) => {
+            const r = tilt.getBoundingClientRect();
+            const nx = (e.clientX - r.left) / r.width - 0.5;
+            const ny = (e.clientY - r.top) / r.height - 0.5;
+            tilt.style.transform = `rotateX(${ny * -12}deg) rotateY(${nx * 14}deg)`;
+          });
+          tilt.addEventListener("pointerleave", () => { tilt.style.transform = ""; });
+        }
+
+        // Magnetic button
+        const mag = document.getElementById("playMagnet");
+        if (mag && isDesktop) {
+          const wrap = mag.closest(".play-card");
+          wrap.addEventListener("pointermove", (e) => {
+            const r = mag.getBoundingClientRect();
+            const x = e.clientX - (r.left + r.width / 2);
+            const y = e.clientY - (r.top + r.height / 2);
+            mag.style.transform = `translate(${x * 0.4}px, ${y * 0.5}px)`;
+          });
+          wrap.addEventListener("pointerleave", () => { mag.style.transform = ""; });
+        }
+
+        // Momentum dial (rotary drag + inertia)
+        const dial = document.getElementById("playDial");
+        if (dial) {
+          let ang = 0, vel = 0, dragging = false, startAng = 0, startPointer = 0;
+          const centre = () => {
+            const r = dial.getBoundingClientRect();
+            return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+          };
+          dial.addEventListener("pointerdown", (e) => {
+            dragging = true; vel = 0;
+            const c = centre();
+            startPointer = Math.atan2(e.clientY - c.y, e.clientX - c.x);
+            startAng = ang;
+            dial.setPointerCapture && dial.setPointerCapture(e.pointerId);
+          });
+          dial.addEventListener("pointermove", (e) => {
+            if (!dragging) return;
+            const c = centre();
+            const a = Math.atan2(e.clientY - c.y, e.clientX - c.x);
+            const na = startAng + (a - startPointer) * 180 / Math.PI;
+            vel = na - ang; ang = na;
+          });
+          const up = () => { dragging = false; };
+          dial.addEventListener("pointerup", up);
+          dial.addEventListener("pointercancel", up);
+          (function tick() {
+            if (!dragging && Math.abs(vel) > 0.05) { ang += vel; vel *= 0.95; }
+            dial.style.transform = `rotate(${ang}deg)`;
+            requestAnimationFrame(tick);
+          })();
+        }
+      }
+
+      /* ========================================================
+         AWWWARDS MOTION MODULES (13–24)
+         Each function owns one section's signature animation.
+         All are transform/opacity based, rAF-batched and guarded
+         for prefers-reduced-motion.
+         ======================================================== */
+
+      /* 13. TEXT REVEALS — hero words (keeps the gold shimmer) +
+         character-by-character section titles on scroll (SplitType). */
+      function initTextReveals() {
+        const hasGSAP = typeof gsap !== "undefined";
+        const hasSplit = typeof SplitType !== "undefined";
+        const titles = document.querySelectorAll(".section-title, .showcase-head");
+
+        if (!hasGSAP || prefersReduced) {
+          // No motion: just make sure everything is visible.
+          titles.forEach((t) => (t.style.opacity = 1));
+          document.documentElement.classList.remove("pre-reveal");
+          return;
+        }
+
+        // Hero heading — reveal by WORDS so the .accent gradient survives.
+        const h1 = document.querySelector(".hero h1");
+        if (h1 && hasSplit) {
+          const split = new SplitType(h1, { types: "lines,words", lineClass: "split-line" });
+          gsap.set(h1, { opacity: 1 });
+          gsap.from(split.words, {
+            yPercent: 120, opacity: 0, duration: 0.95, ease: "power4.out",
+            stagger: 0.045, delay: 0.15,
+          });
+        }
+        // Hero supporting copy.
+        gsap.from(".hero .eyebrow", { y: 22, opacity: 0, duration: 0.7, ease: "power3.out", delay: 0.1 });
+        gsap.from(".hero-sub", { y: 22, opacity: 0, duration: 0.7, ease: "power3.out", delay: 0.55 });
+        gsap.from(".hero .btn", { y: 22, opacity: 0, duration: 0.7, ease: "power3.out", delay: 0.72 });
+
+        // Section titles — character stagger as each enters the viewport.
+        if (hasSplit) {
+          titles.forEach((el) => {
+            const s = new SplitType(el, { types: "chars,words" });
+            gsap.set(el, { opacity: 1 });
+            gsap.from(s.chars, {
+              yPercent: 115, opacity: 0, ease: "power4.out", duration: 0.8, stagger: 0.018,
+              scrollTrigger: { trigger: el, start: "top 88%" },
+            });
+          });
+        } else {
+          titles.forEach((t) => (t.style.opacity = 1));
+        }
+        document.documentElement.classList.remove("pre-reveal");
+      }
+
+      /* 14. NAV — hide on scroll-down, reveal on scroll-up. */
+      function initNav() {
+        const nav = document.querySelector(".nav");
+        if (!nav) return;
+        let lastY = window.scrollY, ticking = false;
+        const update = () => {
+          const y = window.scrollY;
+          if (y > lastY && y > 220) nav.classList.add("nav-hidden");
+          else nav.classList.remove("nav-hidden");
+          lastY = y; ticking = false;
+        };
+        window.addEventListener("scroll", () => {
+          if (!ticking) { requestAnimationFrame(update); ticking = true; }
+        }, { passive: true });
+      }
+
+      /* 15. HERO FLOATERS — scroll parallax on the wrapper (children keep
+         their own idle-drift keyframe, so there's no transform conflict). */
+      function initFloaters() {
+        const wrap = document.querySelector(".hero-floaters");
+        if (!wrap || prefersReduced || typeof gsap === "undefined") return;
+        gsap.to(wrap, {
+          yPercent: -20, ease: "none",
+          scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true },
+        });
+      }
+
+      /* 16. MARQUEE — base auto-scroll + speed/skew driven by Lenis velocity. */
+      function initMarquee() {
+        const marquee = document.getElementById("marquee");
+        if (!marquee || prefersReduced) return;
+        const track = marquee.querySelector(".marquee-track");
+        let x = 0;
+        const base = 0.6;                 // px/frame idle drift
+
+        // Skip work while the band is off-screen.
+        let onScreen = true;
+        if ("IntersectionObserver" in window) {
+          onScreen = false;
+          new IntersectionObserver(
+            (e) => (onScreen = e[0].isIntersecting), { rootMargin: "120px" }
+          ).observe(marquee);
+        }
+
+        function tick() {
+          requestAnimationFrame(tick);
+          if (!onScreen || document.hidden) return;
+          const v = (window.__lenis && typeof window.__lenis.velocity === "number")
+            ? window.__lenis.velocity : 0;
+          x -= base + Math.abs(v) * 0.16;
+          const w = track.offsetWidth;
+          if (w && -x >= w) x += w;        // seamless loop (two tracks)
+          const skew = Math.max(-8, Math.min(8, v * 0.09));
+          marquee.style.transform = `translate3d(${x}px,0,0) skewX(${skew}deg)`;
+        }
+        requestAnimationFrame(tick);
+      }
+
+      /* 17. STATS — count-up numbers + progress rings when scrolled into view. */
+      function initStats() {
+        const cards = document.querySelectorAll(".stat-card");
+        if (!cards.length) return;
+        const RING_LEN = 327;             // 2πr with r=52
+
+        const finalise = (card) => {
+          card.querySelectorAll(".count").forEach((el) => {
+            const dec = parseInt(el.dataset.decimals || "0", 10);
+            el.textContent = parseFloat(el.dataset.count).toFixed(dec);
+          });
+          const ring = card.querySelector(".stat-ring");
+          const fg = card.querySelector(".ring-fg");
+          if (ring && fg) fg.style.strokeDashoffset = String(RING_LEN * (1 - parseFloat(ring.dataset.value) / 100));
+        };
+
+        if (prefersReduced || !("IntersectionObserver" in window)) {
+          cards.forEach(finalise);
+          return;
+        }
+
+        const countUp = (el) => {
+          const target = parseFloat(el.dataset.count);
+          const dec = parseInt(el.dataset.decimals || "0", 10);
+          const dur = 1600; let start = null;
+          const step = (ts) => {
+            if (!start) start = ts;
+            const p = Math.min(1, (ts - start) / dur);
+            const eased = 1 - Math.pow(1 - p, 3);
+            el.textContent = (target * eased).toFixed(dec);
+            if (p < 1) requestAnimationFrame(step);
+            else el.textContent = target.toFixed(dec);
+          };
+          requestAnimationFrame(step);
+        };
+
+        const io = new IntersectionObserver((entries) => {
+          entries.forEach((en) => {
+            if (!en.isIntersecting) return;
+            const card = en.target;
+            card.querySelectorAll(".count").forEach(countUp);
+            const ring = card.querySelector(".stat-ring");
+            const fg = card.querySelector(".ring-fg");
+            if (ring && fg) {
+              fg.style.transition = "stroke-dashoffset 1.6s cubic-bezier(0.22,1,0.36,1)";
+              fg.style.strokeDashoffset = String(RING_LEN * (1 - parseFloat(ring.dataset.value) / 100));
+            }
+            io.unobserve(card);
+          });
+        }, { threshold: 0.4 });
+        cards.forEach((c) => io.observe(c));
+      }
+
+      /* 18. BEFORE / AFTER — draggable comparison slider. */
+      function initCompare() {
+        const wrap = document.getElementById("compare");
+        const before = document.getElementById("compareBefore");
+        const handle = document.getElementById("compareHandle");
+        if (!wrap || !before || !handle) return;
+        let dragging = false;
+        const setPos = (clientX) => {
+          const r = wrap.getBoundingClientRect();
+          let p = (clientX - r.left) / r.width;
+          p = Math.max(0.04, Math.min(0.96, p));
+          before.style.width = (p * 100) + "%";
+          handle.style.left = (p * 100) + "%";
+        };
+        const down = (e) => { dragging = true; setPos(e.clientX); };
+        handle.addEventListener("pointerdown", down);
+        wrap.addEventListener("pointerdown", down);
+        window.addEventListener("pointermove", (e) => { if (dragging) setPos(e.clientX); }, { passive: true });
+        window.addEventListener("pointerup", () => { dragging = false; });
+      }
+
+      /* 19. PROCESS TIMELINE — SVG path draws itself in on scroll. */
+      function initTimeline() {
+        const path = document.getElementById("timelinePath");
+        if (!path) return;
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = len;
+        path.style.strokeDashoffset = len;
+        if (prefersReduced || typeof gsap === "undefined") { path.style.strokeDashoffset = 0; return; }
+        gsap.to(path, {
+          strokeDashoffset: 0, ease: "none",
+          scrollTrigger: { trigger: ".timeline", start: "top 80%", end: "top 35%", scrub: 1 },
+        });
+        // A glowing spark rides the connector as it draws.
+        const spark = document.getElementById("timelineSpark");
+        if (spark) {
+          gsap.set(spark, { opacity: 1 });
+          gsap.fromTo(spark, { left: "8%" }, {
+            left: "92%", ease: "none",
+            scrollTrigger: { trigger: ".timeline", start: "top 80%", end: "top 35%", scrub: 1 },
+          });
+        }
+      }
+
+      /* 20. TESTIMONIAL RAIL — seamless auto-scroll + drag-to-scrub inertia. */
+      function initQuoteRail() {
+        const rail = document.getElementById("quoteRail");
+        const track = document.getElementById("quoteTrack");
+        if (!rail || !track) return;
+        track.innerHTML += track.innerHTML;          // duplicate for seamless loop
+        let x = 0, vel = 0, dragging = false, lastX = 0;
+        const half = () => track.scrollWidth / 2;
+
+        rail.addEventListener("pointerdown", (e) => {
+          dragging = true; lastX = e.clientX; vel = 0; rail.classList.add("grabbing");
+        });
+        window.addEventListener("pointermove", (e) => {
+          if (!dragging) return;
+          const dx = e.clientX - lastX; lastX = e.clientX;
+          x += dx; vel = dx;
+        }, { passive: true });
+        window.addEventListener("pointerup", () => {
+          if (dragging) { dragging = false; rail.classList.remove("grabbing"); }
+        });
+
+        // Skip work while the rail is off-screen.
+        let onScreen = true;
+        if ("IntersectionObserver" in window) {
+          onScreen = false;
+          new IntersectionObserver(
+            (e) => (onScreen = e[0].isIntersecting), { rootMargin: "120px" }
+          ).observe(rail);
+        }
+
+        function tick() {
+          requestAnimationFrame(tick);
+          if ((!onScreen || document.hidden) && !dragging) return;
+          if (!dragging) {
+            x -= 0.4;                                 // idle drift
+            if (Math.abs(vel) > 0.1) { x += vel; vel *= 0.92; } // release momentum
+          }
+          const h = half();
+          if (h) { if (x <= -h) x += h; if (x > 0) x -= h; }
+          track.style.transform = `translate3d(${x}px,0,0)`;
+        }
+        if (!prefersReduced) requestAnimationFrame(tick);
+      }
+
+      /* 21. FAQ — smooth height accordion (single-open). */
+      function initFAQ() {
+        const items = document.querySelectorAll(".faq-item");
+        items.forEach((item) => {
+          const q = item.querySelector(".faq-q");
+          const a = item.querySelector(".faq-a");
+          const inner = item.querySelector(".faq-a-inner");
+          q.addEventListener("click", () => {
+            const isOpen = item.classList.contains("open");
+            items.forEach((o) => {
+              if (o !== item && o.classList.contains("open")) {
+                o.classList.remove("open");
+                o.querySelector(".faq-q").setAttribute("aria-expanded", "false");
+                o.querySelector(".faq-a").style.height = "0px";
+              }
+            });
+            if (isOpen) {
+              item.classList.remove("open");
+              q.setAttribute("aria-expanded", "false");
+              a.style.height = "0px";
+            } else {
+              item.classList.add("open");
+              q.setAttribute("aria-expanded", "true");
+              a.style.height = inner.offsetHeight + "px";
+            }
+          });
+        });
+        window.addEventListener("resize", () => {
+          document.querySelectorAll(".faq-item.open .faq-a").forEach((a) => {
+            a.style.height = a.querySelector(".faq-a-inner").offsetHeight + "px";
+          });
+        }, { passive: true });
+      }
+
+      /* 22. RIPPLE — material-style ripple on [.ripple] elements. */
+      function initRipple() {
+        document.querySelectorAll(".ripple").forEach((el) => {
+          el.addEventListener("pointerdown", (e) => {
+            const r = el.getBoundingClientRect();
+            const rip = document.createElement("span");
+            rip.className = "rip";
+            const size = Math.max(r.width, r.height) * 2.2;
+            rip.style.width = rip.style.height = size + "px";
+            rip.style.left = (e.clientX - r.left) + "px";
+            rip.style.top = (e.clientY - r.top) + "px";
+            el.appendChild(rip);
+            setTimeout(() => rip.remove(), 700);
+          });
+        });
+      }
+
+      /* 23. CURSOR LABEL — morph the ring into a "Preview" pill over demos. */
+      function initCursorLabels() {
+        if (!isDesktop) return;
+        const label = document.querySelector(".cursor-label");
+        document.querySelectorAll(".demo-card").forEach((el) => {
+          el.addEventListener("mouseenter", () => {
+            document.body.classList.add("cursor-view");
+            if (label) label.textContent = "Preview";
+          });
+          el.addEventListener("mouseleave", () => document.body.classList.remove("cursor-view"));
+        });
+      }
+
+      /* --------------------------------------------------------
          10. INIT
          -------------------------------------------------------- */
       function init() {
@@ -2346,10 +3624,28 @@
         initScrollAnimations();
         initDemos();
         refreshScrollMax();
-        init3D();
         initSmoothScroll();
+        initShowcaseSteps();   // 3D itself now lives in the WebGL world module
+        initPlayground();
         initScrollProgress();
         initMagnetic();
+
+        // Awwwards motion layer
+        initTextReveals();
+        initNav();
+        initFloaters();
+        initMarquee();
+        initStats();
+        initCompare();
+        initTimeline();
+        initQuoteRail();
+        initFAQ();
+        initRipple();
+        initCursorLabels();
+
+        // New sections changed the page height — recompute cached max + ST.
+        refreshScrollMax();
+        if (typeof ScrollTrigger !== "undefined") ScrollTrigger.refresh();
 
         // Keep the cached scroll height fresh (layout can change after fonts,
         // images, or a resize) without reading it every frame.
@@ -2374,6 +3670,440 @@
         }, 200);
       }, { passive: true });
     })();
+  </script>
+
+  <!-- ============================================================
+       IMMERSIVE WEBGL WORLD (Three.js, ES modules)
+       One persistent renderer + scene. A single camera flies through
+       five "stations" as you scroll (globe → holo cards → timeline →
+       project cubes → galaxy). Real PBR lighting, PMREM environment
+       reflections, Unreal bloom and Bokeh depth-of-field, GPU-instanced
+       cubes and buffer-geometry particle systems. Quality auto-tunes to
+       sustain framerate; fully skipped for prefers-reduced-motion.
+       ============================================================ -->
+  <script>
+  (function () {
+    if (typeof THREE === 'undefined') return;   // three failed to load — skip the world
+    const EffectComposer = THREE.EffectComposer, RenderPass = THREE.RenderPass,
+          UnrealBloomPass = THREE.UnrealBloomPass, BokehPass = THREE.BokehPass,
+          RoomEnvironment = THREE.RoomEnvironment;
+
+    const canvas = document.getElementById('world');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const lerp = (a, b, n) => a + (b - a) * n;
+    const GOLD = new THREE.Color('#c9a84c');
+    let W = innerWidth, H = innerHeight, mobile = W < 768;
+
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, powerPreference: 'high-performance' });
+    } catch (e) { console.warn('WebGL unavailable — world skipped', e); }
+    if (renderer) boot();
+
+    function boot() {
+      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, mobile ? 1.25 : 1.5));
+      renderer.setSize(W, H);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.05;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(52, W / H, 0.1, 600);
+      camera.position.set(0, 0, 8);
+
+      // ---- Environment reflections (generated once — very cheap) ----
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+      // ---- Realistic lighting (colours are animated by the atmosphere engine) ----
+      const ambient = new THREE.AmbientLight(0xffffff, 0.32);
+      scene.add(ambient);
+      const key = new THREE.DirectionalLight(0xfff1d6, 2.6); key.position.set(6, 8, 10); scene.add(key);
+      const rim = new THREE.DirectionalLight(0x6f8dff, 1.4); rim.position.set(-8, -3, -6); scene.add(rim);
+      const spark = new THREE.PointLight(0xffd27a, 1.6, 44); spark.position.set(0, 0, 3); scene.add(spark);
+
+      // ---- Exponential fog — distant geometry dissolves into the world colour ----
+      scene.fog = new THREE.FogExp2(new THREE.Color('#05060a'), 0.0085);
+
+      // ---- Station depths: Origin + five industry worlds the camera flies through ----
+      const Z = { hero: 0, restaurant: -34, technology: -68, medical: -102, realestate: -136, travel: -170 };
+
+      /* ---- ATMOSPHERE ENGINE ----
+         Each station carries a whole colour world: fog, key/rim light,
+         exposure and a DOM vignette tint. As the camera travels the engine
+         cross-fades between them, so scrolling literally moves you through
+         different worlds instead of one flat dark page. */
+      const worlds = [
+        { z: Z.hero,       fog: '#05060a', key: '#fff1d6', rim: '#6f8dff', exp: 0.92, tint: 'rgba(201,168,76,0.16)' }, // Origin — gold
+        { z: Z.restaurant, fog: '#0b0603', key: '#ffb066', rim: '#ff7a3c', exp: 1.05, tint: 'rgba(255,150,80,0.20)' },  // Restaurant — warm amber/fire
+        { z: Z.technology, fog: '#03060f', key: '#7fe0ff', rim: '#b06bff', exp: 1.16, tint: 'rgba(90,180,255,0.22)' },  // Technology — neon cyan/violet
+        { z: Z.medical,    fog: '#030a16', key: '#cfe6ff', rim: '#3f8fff', exp: 1.00, tint: 'rgba(70,150,255,0.20)' },  // Medical — cobalt blue
+        { z: Z.realestate, fog: '#0b0906', key: '#fff2d6', rim: '#ffe0a0', exp: 1.16, tint: 'rgba(255,225,160,0.16)' }, // Real Estate — warm white/gold
+        { z: Z.travel,     fog: '#061019', key: '#dff0ff', rim: '#8fd0ff', exp: 1.10, tint: 'rgba(150,200,255,0.20)' }, // Travel — open sky
+      ];
+      const atmosEl = document.getElementById('atmos');
+      const cFog = new THREE.Color(worlds[0].fog);
+      const cKey = new THREE.Color(worlds[0].key);
+      const cRim = new THREE.Color(worlds[0].rim);
+      const tmpA = new THREE.Color(), tmpB = new THREE.Color();
+      // parse "rgba(r,g,b,a)" → [r,g,b,a]
+      const rgba = (s) => s.match(/[\d.]+/g).map(Number);
+      function updateAtmosphere(camZ) {
+        // find the two worlds bracketing the camera and the blend factor
+        let i = 0; while (i < worlds.length - 1 && camZ - 8 < worlds[i + 1].z) i++;
+        const a = worlds[i], b = worlds[Math.min(i + 1, worlds.length - 1)];
+        const span = (a.z - b.z) || 1;
+        const f = Math.min(1, Math.max(0, (a.z - (camZ - 8)) / span));
+        cFog.copy(tmpA.set(a.fog)).lerp(tmpB.set(b.fog), f); scene.fog.color.copy(cFog);
+        cKey.copy(tmpA.set(a.key)).lerp(tmpB.set(b.key), f); key.color.copy(cKey); spark.color.copy(cKey);
+        cRim.copy(tmpA.set(a.rim)).lerp(tmpB.set(b.rim), f); rim.color.copy(cRim);
+        renderer.toneMappingExposure = a.exp + (b.exp - a.exp) * f;
+        if (atmosEl) {
+          const ca = rgba(a.tint), cb = rgba(b.tint);
+          const m = ca.map((v, k) => v + (cb[k] - v) * f);
+          atmosEl.style.background =
+            `radial-gradient(120% 100% at 50% 50%, transparent 42%, rgba(${m[0]|0},${m[1]|0},${m[2]|0},${m[3].toFixed(3)}) 100%)`;
+        }
+      }
+
+      // ---- Global drifting starfield spanning the whole corridor, so every
+      //      section keeps atmospheric depth even between the 3D stations. ----
+      const FIELD = mobile ? 3200 : 6500;
+      const fg = new THREE.BufferGeometry();
+      const fp = new Float32Array(FIELD * 3), fc = new Float32Array(FIELD * 3);
+      const sCold = new THREE.Color('#cfd8ff'), sWarm = new THREE.Color('#ffdca0');
+      for (let i = 0; i < FIELD; i++) {
+        fp[i * 3] = (Math.random() - 0.5) * 64;
+        fp[i * 3 + 1] = (Math.random() - 0.5) * 46;
+        fp[i * 3 + 2] = 12 - Math.random() * 166;   // covers +12 .. -154 (whole path)
+        const col = Math.random() < 0.3 ? sWarm : sCold;
+        fc[i * 3] = col.r; fc[i * 3 + 1] = col.g; fc[i * 3 + 2] = col.b;
+      }
+      fg.setAttribute('position', new THREE.BufferAttribute(fp, 3));
+      fg.setAttribute('color', new THREE.BufferAttribute(fc, 3));
+      const starfield = new THREE.Points(fg, new THREE.PointsMaterial({
+        size: mobile ? 0.13 : 0.1, vertexColors: true, transparent: true,
+        opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending,
+      }));
+      scene.add(starfield);
+
+      /* helper: buffer-geometry particle cloud */
+      function particleField(count, rInner, rOuter, color, size, additive = true) {
+        const g = new THREE.BufferGeometry();
+        const p = new Float32Array(count * 3);
+        for (let i = 0; i < count; i++) {
+          const r = rInner + Math.random() * (rOuter - rInner);
+          const th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
+          p[i * 3] = r * Math.sin(ph) * Math.cos(th);
+          p[i * 3 + 1] = r * Math.sin(ph) * Math.sin(th);
+          p[i * 3 + 2] = r * Math.cos(ph);
+        }
+        g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+        return new THREE.Points(g, new THREE.PointsMaterial({
+          color, size, transparent: true, opacity: 0.7, depthWrite: false,
+          blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+        }));
+      }
+
+      /* ========== STATION 1 — HERO GLOBE ========== */
+      const globe = new THREE.Group(); globe.position.z = Z.hero; scene.add(globe);
+      const core = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(1.7, 6),
+        new THREE.MeshStandardMaterial({ color: 0x0d0d10, metalness: 1.0, roughness: 0.16, envMapIntensity: 1.3 })
+      );
+      globe.add(core);
+      const grid = new THREE.Mesh(
+        new THREE.SphereGeometry(1.86, 40, 22),
+        new THREE.MeshBasicMaterial({ color: GOLD, wireframe: true, transparent: true, opacity: 0.14 })
+      );
+      globe.add(grid);
+      const atmo = new THREE.Mesh(
+        new THREE.SphereGeometry(2.4, 48, 32),
+        new THREE.ShaderMaterial({
+          transparent: true, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false,
+          uniforms: { c: { value: GOLD.clone() }, o: { value: 0 } },
+          vertexShader: 'varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+          // Thin, clamped rim glow (not a filled disc) so hero text stays legible;
+          // `o` fades it in during ignition.
+          fragmentShader: 'varying vec3 vN; uniform vec3 c; uniform float o; void main(){ float i = pow(clamp(0.62 - dot(vN, vec3(0.0,0.0,1.0)), 0.0, 1.0), 3.2) * 0.5 * o; gl_FragColor = vec4(c * i, i); }',
+        })
+      );
+      globe.add(atmo);
+
+      // Halo particles double as the IGNITION: they start scattered far out
+      // and converge onto the shell as the globe "ignites" on entry (Wow #1).
+      const HALO = mobile ? 700 : 1600;
+      const haloGeo = new THREE.BufferGeometry();
+      const haloTarget = new Float32Array(HALO * 3);   // final shell position
+      const haloStart = new Float32Array(HALO * 3);    // scattered origin
+      const haloPos = new Float32Array(HALO * 3);      // live (animated)
+      for (let i = 0; i < HALO; i++) {
+        const r = 2.7 + Math.random() * 2.7;
+        const th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
+        haloTarget[i * 3] = r * Math.sin(ph) * Math.cos(th);
+        haloTarget[i * 3 + 1] = r * Math.sin(ph) * Math.sin(th);
+        haloTarget[i * 3 + 2] = r * Math.cos(ph);
+        const R = 22 + Math.random() * 30;             // far scatter
+        haloStart[i * 3] = (Math.random() - 0.5) * R;
+        haloStart[i * 3 + 1] = (Math.random() - 0.5) * R;
+        haloStart[i * 3 + 2] = (Math.random() - 0.5) * R;
+        haloPos[i * 3] = haloStart[i * 3];
+        haloPos[i * 3 + 1] = haloStart[i * 3 + 1];
+        haloPos[i * 3 + 2] = haloStart[i * 3 + 2];
+      }
+      haloGeo.setAttribute('position', new THREE.BufferAttribute(haloPos, 3));
+      const halo = new THREE.Points(haloGeo, new THREE.PointsMaterial({
+        color: GOLD, size: mobile ? 0.05 : 0.035, transparent: true, opacity: 0.5,
+        depthWrite: false, blending: THREE.AdditiveBlending,
+      }));
+      globe.add(halo);
+
+      // Ignition timeline: 0 → 1 over ~2.2s; eased convergence of the halo,
+      // globe scale-up and material fade-in.
+      let ignite = reduce ? 1 : 0;
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      function applyIgnition(dt) {
+        if (ignite < 1) ignite = Math.min(1, ignite + dt / 2.2);
+        const e = easeOut(ignite);
+        for (let i = 0; i < HALO * 3; i++) haloPos[i] = haloStart[i] + (haloTarget[i] - haloStart[i]) * e;
+        haloGeo.attributes.position.needsUpdate = true;
+        const s = 0.15 + 0.85 * e; core.scale.setScalar(s); grid.scale.setScalar(s);
+        atmo.material.uniforms.o.value = e; grid.material.opacity = 0.14 * e;
+        halo.material.opacity = 0.5 * e;
+      }
+
+      /* ========== INDUSTRY WORLDS ==========
+         A tiny registry: each world builds its own group with a distinct
+         hero object + physics, and an update(t, prox) where prox (0..1) is
+         how close the camera is — driving a materialize / dematerialize
+         dissolve so worlds transform into one another as you travel. */
+      const STATIONS = [];
+      function register(group, z, update) {
+        group.position.z = z; group.visible = false; scene.add(group); STATIONS.push({ group, z, update });
+      }
+      const D = new THREE.Object3D();
+
+      /* --- RESTAURANT — warm gourmet plate under rising embers --- */
+      {
+        const g = new THREE.Group();
+        const plate = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.35, 0.16, 56),
+          new THREE.MeshStandardMaterial({ color: 0x1a1206, metalness: 1, roughness: 0.24, envMapIntensity: 1.4, transparent: true }));
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(2.2, 0.08, 16, 64),
+          new THREE.MeshStandardMaterial({ color: 0xffcf8a, metalness: 1, roughness: 0.2, emissive: 0x3a1a00, emissiveIntensity: 0.5, transparent: true }));
+        rim.rotation.x = Math.PI / 2; rim.position.y = 0.09;
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(1.3, 32, 20),
+          new THREE.MeshStandardMaterial({ color: 0x2a1a08, metalness: 0.9, roughness: 0.3, emissive: 0x180a00, emissiveIntensity: 0.3, transparent: true }));
+        dome.position.y = 0.5; dome.scale.y = 0.7;
+        const EM = mobile ? 500 : 1100;
+        const eg = new THREE.BufferGeometry(); const ep = new Float32Array(EM * 3); const ev = [];
+        for (let i = 0; i < EM; i++) { const aa = Math.random() * Math.PI * 2, r = Math.random() * 1.9; ep[i*3]=Math.cos(aa)*r; ep[i*3+1]=Math.random()*4.2; ep[i*3+2]=Math.sin(aa)*r; ev.push(0.4+Math.random()*0.9); }
+        eg.setAttribute('position', new THREE.BufferAttribute(ep, 3));
+        const embers = new THREE.Points(eg, new THREE.PointsMaterial({ color: 0xff8a3c, size: mobile?0.09:0.06, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending }));
+        g.add(plate, rim, dome, embers);
+        g.rotation.x = -0.5;   // tilt the plate up toward the camera
+        register(g, Z.restaurant, (t, prox) => {
+          g.rotation.y = t * 0.14;
+          const pos = eg.attributes.position.array;
+          for (let i = 0; i < EM; i++) { pos[i*3+1] += ev[i]*0.03; if (pos[i*3+1] > 4.4) pos[i*3+1] = 0; }
+          eg.attributes.position.needsUpdate = true;
+          g.scale.setScalar(0.72 + 0.28 * prox);
+          plate.material.opacity = prox; rim.material.opacity = prox; dome.material.opacity = prox; embers.material.opacity = 0.9 * prox;
+        });
+      }
+
+      /* --- TECHNOLOGY — holographic processor with orbiting data --- */
+      {
+        const g = new THREE.Group();
+        const chip = new THREE.Mesh(new THREE.BoxGeometry(3, 0.4, 3),
+          new THREE.MeshStandardMaterial({ color: 0x0a0f16, metalness: 1, roughness: 0.25, emissive: 0x0a2a3a, emissiveIntensity: 0.6, envMapIntensity: 1.4, transparent: true }));
+        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(3.06, 0.44, 3.06)),
+          new THREE.LineBasicMaterial({ color: 0x6fe0ff, transparent: true, opacity: 0.9 }));
+        const grid = new THREE.GridHelper(3, 12, 0x6fe0ff, 0x235a72); grid.position.y = 0.22;
+        grid.material.transparent = true; grid.material.opacity = 0.5;
+        const N = 14;
+        const im = new THREE.InstancedMesh(new THREE.BoxGeometry(0.18, 0.18, 0.18),
+          new THREE.MeshStandardMaterial({ color: 0x0a2233, emissive: 0x30c0ff, emissiveIntensity: 1.3, metalness: 0.6, roughness: 0.3, transparent: true }), N);
+        const orb = []; for (let i = 0; i < N; i++) orb.push({ r: 2.1 + Math.random()*1.3, a: Math.random()*6.28, y: (Math.random()-0.5)*1.6, s: 0.4 + Math.random()*0.9 });
+        g.add(chip, edges, grid, im);
+        g.rotation.x = -0.42;   // tilt the processor face toward the camera
+        register(g, Z.technology, (t, prox) => {
+          g.rotation.y = t * 0.2; chip.material.emissiveIntensity = 0.5 + 0.3 * Math.sin(t*3);
+          for (let i = 0; i < N; i++) { const o = orb[i]; const aa = o.a + t*o.s; D.position.set(Math.cos(aa)*o.r, o.y, Math.sin(aa)*o.r); D.rotation.set(t, t*1.3, 0); D.scale.setScalar(1); D.updateMatrix(); im.setMatrixAt(i, D.matrix); }
+          im.instanceMatrix.needsUpdate = true;
+          g.scale.setScalar(0.72 + 0.28 * prox);
+          chip.material.opacity = prox; edges.material.opacity = 0.9 * prox; grid.material.opacity = 0.5 * prox; im.material.opacity = prox;
+        });
+      }
+
+      /* --- MEDICAL — rotating DNA double helix --- */
+      {
+        const g = new THREE.Group();
+        const N = mobile ? 90 : 150, dy = 0.09, R = 1.3, turns = 3;
+        const sg = new THREE.BufferGeometry(); const sp = new Float32Array(N*2*3); const sc = new Float32Array(N*2*3);
+        const cA = new THREE.Color('#9fd6ff'), cB = new THREE.Color('#3f8fff'); const rungPts = [];
+        for (let i = 0; i < N; i++) { const aa = i*(Math.PI*2*turns/N); const y = i*dy - N*dy/2;
+          const x1=Math.cos(aa)*R, z1=Math.sin(aa)*R, x2=Math.cos(aa+Math.PI)*R, z2=Math.sin(aa+Math.PI)*R;
+          sp[i*6]=x1; sp[i*6+1]=y; sp[i*6+2]=z1; sp[i*6+3]=x2; sp[i*6+4]=y; sp[i*6+5]=z2;
+          cA.toArray(sc, i*6); cB.toArray(sc, i*6+3);
+          if (i % 3 === 0) rungPts.push(new THREE.Vector3(x1,y,z1), new THREE.Vector3(x2,y,z2));
+        }
+        sg.setAttribute('position', new THREE.BufferAttribute(sp, 3)); sg.setAttribute('color', new THREE.BufferAttribute(sc, 3));
+        const strands = new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.13, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, blending: THREE.AdditiveBlending }));
+        const rungs = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(rungPts),
+          new THREE.LineBasicMaterial({ color: 0x5fa8ff, transparent: true, opacity: 0.4 }));
+        g.add(strands, rungs);
+        register(g, Z.medical, (t, prox) => { g.rotation.y = t * 0.5; g.scale.setScalar(0.72 + 0.28*prox); strands.material.opacity = 0.95*prox; rungs.material.opacity = 0.4*prox; });
+      }
+
+      /* --- REAL ESTATE — tapered glass tower (GPU instanced) --- */
+      {
+        const g = new THREE.Group();
+        const N = mobile ? 24 : 40;
+        const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1.6, 0.5, 1.6),
+          new THREE.MeshStandardMaterial({ color: 0xdfe6ff, metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.4, envMapIntensity: 1.7 }), N);
+        const base = []; for (let i = 0; i < N; i++) base[i] = { y: i*0.5 - N*0.25, rot: i*0.32 };
+        g.add(im);
+        register(g, Z.realestate, (t, prox) => {
+          for (let i = 0; i < N; i++) { const bb = base[i]; const w = Math.max(0.2, 1 - Math.abs(bb.y)/(N*0.28)) * 1.4 * prox; D.position.set(0, bb.y, 0); D.rotation.y = bb.rot + t*0.1; D.scale.set(w, 1, w); D.updateMatrix(); im.setMatrixAt(i, D.matrix); }
+          im.instanceMatrix.needsUpdate = true; g.rotation.y = t * 0.12; im.material.opacity = 0.4 * prox;
+        });
+      }
+
+      /* --- TRAVEL — paper plane arcing through drifting clouds --- */
+      {
+        const g = new THREE.Group();
+        const plane = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.6, 4),
+          new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.2, roughness: 0.4, emissive: 0x88bbff, emissiveIntensity: 0.3, transparent: true }));
+        plane.rotation.z = Math.PI / 2; plane.scale.set(1, 1, 0.3);
+        const TR = 120; const tg = new THREE.BufferGeometry(); const tp = new Float32Array(TR*3);
+        tg.setAttribute('position', new THREE.BufferAttribute(tp, 3));
+        const trail = new THREE.Points(tg, new THREE.PointsMaterial({ color: 0xdff0ff, size: 0.08, transparent: true, opacity: 0.7, depthWrite: false, blending: THREE.AdditiveBlending }));
+        const CL = mobile ? 400 : 900; const cg = new THREE.BufferGeometry(); const cp = new Float32Array(CL*3);
+        for (let i = 0; i < CL; i++) { cp[i*3]=(Math.random()-0.5)*22; cp[i*3+1]=(Math.random()-0.5)*10; cp[i*3+2]=(Math.random()-0.5)*16; }
+        cg.setAttribute('position', new THREE.BufferAttribute(cp, 3));
+        const clouds = new THREE.Points(cg, new THREE.PointsMaterial({ color: 0xbcd8ff, size: mobile?0.5:0.4, transparent: true, opacity: 0.18, depthWrite: false }));
+        g.add(plane, trail, clouds);
+        register(g, Z.travel, (t, prox) => {
+          const px = Math.sin(t*0.6)*4, py = Math.cos(t*0.4)*1.5, pz = Math.cos(t*0.6)*2;
+          plane.position.set(px, py, pz); plane.rotation.y = t * 0.6;
+          tp.copyWithin(3, 0, (TR-1)*3); tp[0]=px; tp[1]=py; tp[2]=pz; tg.attributes.position.needsUpdate = true;
+          clouds.rotation.y = t * 0.02; g.scale.setScalar(0.8 + 0.2*prox);
+          plane.material.opacity = prox; trail.material.opacity = 0.7*prox; clouds.material.opacity = 0.18*prox;
+        });
+      }
+
+      /* ---------- Post-processing: bloom + depth of field ----------
+         Wrapped so a device that can't build these passes (some mobile
+         GPUs) FALLS BACK to a plain render instead of a blank canvas. */
+      let composer = null, bloom = null, bokeh = null;
+      try {
+        if (EffectComposer && RenderPass && UnrealBloomPass) {
+          composer = new EffectComposer(renderer);
+          composer.setPixelRatio(renderer.getPixelRatio());
+          composer.setSize(W, H);
+          composer.addPass(new RenderPass(scene, camera));
+          bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.5, 0.5, 0.9);
+          composer.addPass(bloom);
+          if (BokehPass) {
+            bokeh = new BokehPass(scene, camera, { focus: 8.0, aperture: 0.00022, maxblur: 0.007 });
+            bokeh.enabled = !mobile;      // DOF is the priciest pass — off on phones
+            composer.addPass(bokeh);
+          }
+          // r128 has no OutputPass — a gamma pass converts linear → sRGB.
+          if (THREE.GammaCorrectionShader) composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));
+        }
+      } catch (e) { console.warn('post-processing unavailable, using plain render', e); composer = null; }
+      // Single render entry point with graceful fallback.
+      function renderFrame() {
+        if (composer) { try { composer.render(); return; } catch (e) { composer = null; } }
+        renderer.render(scene, camera);
+      }
+
+      /* ---------- Scroll + pointer state ---------- */
+      let scrollMax = 1;
+      const refreshMax = () => { scrollMax = Math.max(1, document.documentElement.scrollHeight - innerHeight); };
+      refreshMax();
+      addEventListener('load', refreshMax); setTimeout(refreshMax, 800); setTimeout(refreshMax, 2200);
+
+      let tmx = 0, tmy = 0, mx = 0, my = 0;
+      if (matchMedia('(pointer:fine)').matches) {
+        addEventListener('pointermove', (e) => { tmx = e.clientX / W - 0.5; tmy = e.clientY / H - 0.5; }, { passive: true });
+      }
+
+      const startZ = 8, endZ = Z.travel + 8;   // fly from the origin globe through to the travel world
+      let camZ = startZ;
+      const stationZs = Object.values(Z);
+      const nearestStation = (z) => stationZs.reduce((a, b) => Math.abs(b - z) < Math.abs(a - z) ? b : a, stationZs[0]);
+
+      /* ---------- Render loop with adaptive quality ---------- */
+      let ready = false, frames = 0, tStart = 0, tuned = false, prev = 0;
+      function tick(now) {
+        requestAnimationFrame(tick);
+        if (document.hidden) { prev = now; return; }
+        const t = now * 0.001;
+        const dt = prev ? Math.min(0.05, (now - prev) / 1000) : 0.016; prev = now;
+
+        const p = Math.min(1, Math.max(0, scrollY / scrollMax));
+        camZ = lerp(camZ, startZ + p * (endZ - startZ), 0.06);
+        mx = lerp(mx, tmx, 0.05); my = lerp(my, tmy, 0.05);
+        camera.position.x = mx * 1.4;
+        camera.position.y = -my * 1.0;
+        camera.position.z = camZ;
+        camera.lookAt(mx * 2.0, -my * 1.5, camZ - 12);
+
+        applyIgnition(dt);        // Wow #1 — globe assembles from particles
+        updateAtmosphere(camZ);   // cross-fade fog / lights / exposure / DOM tint
+
+        if (bokeh && bokeh.enabled) {
+          const featured = nearestStation(camZ - 8);
+          bokeh.uniforms.focus.value = Math.min(30, Math.max(4, camZ - featured));
+        }
+
+        globe.rotation.y = t * 0.08 + p * 6.0;
+        globe.rotation.x = Math.sin(t * 0.2) * 0.1;
+        halo.rotation.y = -t * 0.03;
+        core.rotation.y = t * 0.05;
+
+        // Drive each industry world by proximity — materialize as the camera
+        // nears, dissolve as it leaves. Far worlds are skipped entirely.
+        const camPos = camZ - 8;
+        for (const st of STATIONS) {
+          const prox = Math.max(0, 1 - Math.abs(camPos - st.z) / 22);
+          if (prox <= 0.001) { if (st.group.visible) st.group.visible = false; continue; }
+          st.group.visible = true;
+          st.update(t, prox, p);
+        }
+
+        renderFrame();
+
+        if (!ready) { ready = true; canvas.classList.add('ready'); tStart = now; }
+        if (!tuned) {
+          frames++;
+          if (now - tStart > 1400) {
+            const fps = frames / ((now - tStart) / 1000);
+            if (fps < 46 && bokeh) bokeh.enabled = false;
+            if (fps < 32) { if (bloom) bloom.strength = 0.4; renderer.setPixelRatio(1); if (composer) composer.setPixelRatio(1); onResize(); }
+            tuned = true;
+          }
+        }
+      }
+
+      if (reduce) {
+        applyIgnition(1); updateAtmosphere(camZ);
+        renderFrame(); canvas.classList.add('ready');
+      } else requestAnimationFrame(tick);
+
+      /* ---------- Resize ---------- */
+      function onResize() {
+        W = innerWidth; H = innerHeight; mobile = W < 768;
+        camera.aspect = W / H; camera.updateProjectionMatrix();
+        renderer.setSize(W, H);
+        if (composer) composer.setSize(W, H);
+        if (bloom) bloom.setSize(W, H);
+        refreshMax();
+      }
+      let rt2; addEventListener('resize', () => { clearTimeout(rt2); rt2 = setTimeout(onResize, 180); }, { passive: true });
+    }
+  })();
   </script>
 </body>
 </html>
