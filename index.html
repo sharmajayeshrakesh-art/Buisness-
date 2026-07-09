@@ -1035,6 +1035,15 @@
     }
     #world.ready { opacity: 1; }
 
+    .atmos {
+      position: fixed;
+      inset: 0;
+      z-index: 1;             /* above the world canvas, below content (z-index 2) */
+      pointer-events: none;
+      transition: background 0.6s linear;
+      mix-blend-mode: screen; /* tints light areas, keeps darks clean */
+    }
+
     /* Keep foreground content above the canvas */
     .nav, .capabilities, .demos, .process,
     .testimonials, .contact, .foot { position: relative; z-index: 2; }
@@ -1951,6 +1960,10 @@
        travels through) lives on this one fixed canvas behind all content. -->
   <canvas id="world" aria-hidden="true"></canvas>
 
+  <!-- Atmosphere colour-grade: a per-world vignette tint the WebGL layer
+       cross-fades as the camera travels (sits above the canvas, below content). -->
+  <div class="atmos" id="atmos" aria-hidden="true"></div>
+
   <!-- Reading-progress bar -->
   <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
 
@@ -2042,80 +2055,6 @@
         <span>Design</span><span class="dot">✦</span><span>Motion</span><span class="dot">✦</span>
         <span>Development</span><span class="dot">✦</span><span>Interaction</span><span class="dot">✦</span>
         <span>Performance</span><span class="dot">✦</span><span>Strategy</span><span class="dot">✦</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= 3D & MOTION SHOWCASE (scroll-driven) ================= -->
-  <section class="showcase" id="motion">
-    <div class="showcase-sticky">
-      <div class="showcase-scrim" aria-hidden="true"></div>
-      <div class="showcase-copy">
-        <span class="eyebrow">3D &amp; Motion</span>
-        <h2 class="showcase-head">A world you scroll through.</h2>
-        <div class="showcase-steps">
-          <p class="showcase-step" data-step="0">Everything behind this text is real WebGL — rendered live, not a video.</p>
-          <p class="showcase-step" data-step="1">As you scroll, the camera flies deeper through the scene.</p>
-          <p class="showcase-step" data-step="2">Lighting, reflections, depth of field and bloom — all in the browser.</p>
-        </div>
-        <div class="showcase-hint"><span class="drag-ic">↓</span> Keep scrolling to travel</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= INTERACTIVE PLAYGROUND ================= -->
-  <section class="playground" id="interactive">
-    <div class="wrap">
-      <span class="eyebrow reveal">Interactive By Design</span>
-      <h2 class="section-title reveal">Things your visitors can play with.</h2>
-      <p class="section-lead reveal">Every element below is live — hover, move and drag them. This is the kind of interactivity we build into your site.</p>
-
-      <div class="play-grid">
-        <!-- 1. Cursor-follow spotlight -->
-        <article class="play-card reveal" id="playSpotlight" data-hover>
-          <div class="play-spot" aria-hidden="true"></div>
-          <div class="play-body">
-            <div class="play-ic">✦</div>
-            <h3>Cursor Spotlight</h3>
-            <p>A glow that follows the pointer across the surface.</p>
-            <span class="play-tag">Move your mouse over me</span>
-          </div>
-        </article>
-
-        <!-- 2. 3D tilt card -->
-        <article class="play-card play-tilt reveal" id="playTilt" data-hover>
-          <div class="play-body">
-            <div class="play-ic">🧊</div>
-            <h3>3D Tilt</h3>
-            <p>A card that leans in 3D toward your cursor with depth.</p>
-            <span class="play-tag">Hover to tilt</span>
-          </div>
-        </article>
-
-        <!-- 3. Magnetic button -->
-        <article class="play-card reveal" data-hover>
-          <div class="play-body">
-            <div class="play-ic">🧲</div>
-            <h3>Magnetic Pull</h3>
-            <p>Buttons that reach toward the cursor to invite the click.</p>
-            <button class="play-magnet" id="playMagnet" type="button">Pull me</button>
-          </div>
-        </article>
-
-        <!-- 4. Draggable spinner -->
-        <article class="play-card reveal" data-hover>
-          <div class="play-body">
-            <div class="play-ic">🎛️</div>
-            <h3>Drag to Spin</h3>
-            <p>Physical, momentum-based controls that respond to a flick.</p>
-            <div class="play-dial-wrap">
-              <div class="play-dial" id="playDial" aria-hidden="true">
-                <span class="play-dial-mark"></span>
-              </div>
-            </div>
-            <span class="play-tag">Drag the dial</span>
-          </div>
-        </article>
       </div>
     </div>
   </section>
@@ -2350,21 +2289,6 @@
           <blockquote>Enquiries tripled. It finally looks like the serious clinic we always were. Worth every rupee and then some.</blockquote>
           <figcaption class="quote-author"><div class="quote-avatar">NR</div><div><strong>Dr. Nikhil Rao</strong><span>Prisha Care</span></div></figcaption>
         </figure>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= LOGO SLIDER (infinite) ================= -->
-  <section class="logos" id="stack">
-    <div class="wrap">
-      <p class="logos-label reveal">Built with a modern, battle-tested stack</p>
-    </div>
-    <div class="logo-slider" aria-hidden="true">
-      <div class="logo-track">
-        <span>React</span><span>Next.js</span><span>GSAP</span><span>Three.js</span><span>Framer</span>
-        <span>WebGL</span><span>Node</span><span>Tailwind</span><span>Vite</span><span>Lenis</span>
-        <span>React</span><span>Next.js</span><span>GSAP</span><span>Three.js</span><span>Framer</span>
-        <span>WebGL</span><span>Node</span><span>Tailwind</span><span>Vite</span><span>Lenis</span>
       </div>
     </div>
   </section>
@@ -3786,14 +3710,55 @@
       const pmrem = new THREE.PMREMGenerator(renderer);
       scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
-      // ---- Realistic lighting ----
-      scene.add(new THREE.AmbientLight(0xffffff, 0.32));
+      // ---- Realistic lighting (colours are animated by the atmosphere engine) ----
+      const ambient = new THREE.AmbientLight(0xffffff, 0.32);
+      scene.add(ambient);
       const key = new THREE.DirectionalLight(0xfff1d6, 2.6); key.position.set(6, 8, 10); scene.add(key);
       const rim = new THREE.DirectionalLight(0x6f8dff, 1.4); rim.position.set(-8, -3, -6); scene.add(rim);
       const spark = new THREE.PointLight(0xffd27a, 1.6, 44); spark.position.set(0, 0, 3); scene.add(spark);
 
+      // ---- Exponential fog — distant geometry dissolves into the world colour ----
+      scene.fog = new THREE.FogExp2(new THREE.Color('#05060a'), 0.0085);
+
       // ---- Station depths the camera travels between ----
       const Z = { hero: 0, services: -34, about: -68, portfolio: -102, contact: -140 };
+
+      /* ---- ATMOSPHERE ENGINE ----
+         Each station carries a whole colour world: fog, key/rim light,
+         exposure and a DOM vignette tint. As the camera travels the engine
+         cross-fades between them, so scrolling literally moves you through
+         different worlds instead of one flat dark page. */
+      const worlds = [
+        { z: Z.hero,      fog: '#05060a', key: '#fff1d6', rim: '#6f8dff', exp: 0.92, tint: 'rgba(201,168,76,0.18)' },
+        { z: Z.services,  fog: '#05070f', key: '#8fe0ff', rim: '#b06bff', exp: 1.12, tint: 'rgba(90,150,255,0.20)' },
+        { z: Z.about,     fog: '#04070d', key: '#dbe9ff', rim: '#3f8fff', exp: 1.02, tint: 'rgba(70,140,255,0.18)' },
+        { z: Z.portfolio, fog: '#0b0806', key: '#ffe6b0', rim: '#fff4e0', exp: 1.18, tint: 'rgba(255,210,140,0.18)' },
+        { z: Z.contact,   fog: '#06040c', key: '#ffd27a', rim: '#7c5bff', exp: 1.10, tint: 'rgba(150,110,255,0.22)' },
+      ];
+      const atmosEl = document.getElementById('atmos');
+      const cFog = new THREE.Color(worlds[0].fog);
+      const cKey = new THREE.Color(worlds[0].key);
+      const cRim = new THREE.Color(worlds[0].rim);
+      const tmpA = new THREE.Color(), tmpB = new THREE.Color();
+      // parse "rgba(r,g,b,a)" → [r,g,b,a]
+      const rgba = (s) => s.match(/[\d.]+/g).map(Number);
+      function updateAtmosphere(camZ) {
+        // find the two worlds bracketing the camera and the blend factor
+        let i = 0; while (i < worlds.length - 1 && camZ - 8 < worlds[i + 1].z) i++;
+        const a = worlds[i], b = worlds[Math.min(i + 1, worlds.length - 1)];
+        const span = (a.z - b.z) || 1;
+        const f = Math.min(1, Math.max(0, (a.z - (camZ - 8)) / span));
+        cFog.copy(tmpA.set(a.fog)).lerp(tmpB.set(b.fog), f); scene.fog.color.copy(cFog);
+        cKey.copy(tmpA.set(a.key)).lerp(tmpB.set(b.key), f); key.color.copy(cKey); spark.color.copy(cKey);
+        cRim.copy(tmpA.set(a.rim)).lerp(tmpB.set(b.rim), f); rim.color.copy(cRim);
+        renderer.toneMappingExposure = a.exp + (b.exp - a.exp) * f;
+        if (atmosEl) {
+          const ca = rgba(a.tint), cb = rgba(b.tint);
+          const m = ca.map((v, k) => v + (cb[k] - v) * f);
+          atmosEl.style.background =
+            `radial-gradient(120% 100% at 50% 50%, transparent 42%, rgba(${m[0]|0},${m[1]|0},${m[2]|0},${m[3].toFixed(3)}) 100%)`;
+        }
+      }
 
       // ---- Global drifting starfield spanning the whole corridor, so every
       //      section keeps atmospheric depth even between the 3D stations. ----
@@ -3850,14 +3815,56 @@
         new THREE.SphereGeometry(2.4, 48, 32),
         new THREE.ShaderMaterial({
           transparent: true, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false,
-          uniforms: { c: { value: GOLD.clone() } },
+          uniforms: { c: { value: GOLD.clone() }, o: { value: 0 } },
           vertexShader: 'varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-          fragmentShader: 'varying vec3 vN; uniform vec3 c; void main(){ float i = pow(0.72 - dot(vN, vec3(0.0,0.0,1.0)), 3.0); gl_FragColor = vec4(c * i, i); }',
+          // Thin, clamped rim glow (not a filled disc) so hero text stays legible;
+          // `o` fades it in during ignition.
+          fragmentShader: 'varying vec3 vN; uniform vec3 c; uniform float o; void main(){ float i = pow(clamp(0.62 - dot(vN, vec3(0.0,0.0,1.0)), 0.0, 1.0), 3.2) * 0.5 * o; gl_FragColor = vec4(c * i, i); }',
         })
       );
       globe.add(atmo);
-      const halo = particleField(mobile ? 700 : 1600, 2.7, 5.4, GOLD, mobile ? 0.05 : 0.035);
+
+      // Halo particles double as the IGNITION: they start scattered far out
+      // and converge onto the shell as the globe "ignites" on entry (Wow #1).
+      const HALO = mobile ? 700 : 1600;
+      const haloGeo = new THREE.BufferGeometry();
+      const haloTarget = new Float32Array(HALO * 3);   // final shell position
+      const haloStart = new Float32Array(HALO * 3);    // scattered origin
+      const haloPos = new Float32Array(HALO * 3);      // live (animated)
+      for (let i = 0; i < HALO; i++) {
+        const r = 2.7 + Math.random() * 2.7;
+        const th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
+        haloTarget[i * 3] = r * Math.sin(ph) * Math.cos(th);
+        haloTarget[i * 3 + 1] = r * Math.sin(ph) * Math.sin(th);
+        haloTarget[i * 3 + 2] = r * Math.cos(ph);
+        const R = 22 + Math.random() * 30;             // far scatter
+        haloStart[i * 3] = (Math.random() - 0.5) * R;
+        haloStart[i * 3 + 1] = (Math.random() - 0.5) * R;
+        haloStart[i * 3 + 2] = (Math.random() - 0.5) * R;
+        haloPos[i * 3] = haloStart[i * 3];
+        haloPos[i * 3 + 1] = haloStart[i * 3 + 1];
+        haloPos[i * 3 + 2] = haloStart[i * 3 + 2];
+      }
+      haloGeo.setAttribute('position', new THREE.BufferAttribute(haloPos, 3));
+      const halo = new THREE.Points(haloGeo, new THREE.PointsMaterial({
+        color: GOLD, size: mobile ? 0.05 : 0.035, transparent: true, opacity: 0.5,
+        depthWrite: false, blending: THREE.AdditiveBlending,
+      }));
       globe.add(halo);
+
+      // Ignition timeline: 0 → 1 over ~2.2s; eased convergence of the halo,
+      // globe scale-up and material fade-in.
+      let ignite = reduce ? 1 : 0;
+      const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      function applyIgnition(dt) {
+        if (ignite < 1) ignite = Math.min(1, ignite + dt / 2.2);
+        const e = easeOut(ignite);
+        for (let i = 0; i < HALO * 3; i++) haloPos[i] = haloStart[i] + (haloTarget[i] - haloStart[i]) * e;
+        haloGeo.attributes.position.needsUpdate = true;
+        const s = 0.15 + 0.85 * e; core.scale.setScalar(s); grid.scale.setScalar(s);
+        atmo.material.uniforms.o.value = e; grid.material.opacity = 0.14 * e;
+        halo.material.opacity = 0.5 * e;
+      }
 
       /* ========== STATION 2 — HOLOGRAPHIC SERVICE CARDS ========== */
       const services = new THREE.Group(); services.position.z = Z.services; scene.add(services);
@@ -3955,7 +3962,7 @@
       composer.setPixelRatio(renderer.getPixelRatio());
       composer.setSize(W, H);
       composer.addPass(new RenderPass(scene, camera));
-      const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.62, 0.5, 0.82);
+      const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.5, 0.5, 0.9);
       composer.addPass(bloom);
       const bokeh = new BokehPass(scene, camera, { focus: 8.0, aperture: 0.00022, maxblur: 0.007 });
       bokeh.enabled = !mobile;          // DOF is the priciest pass — off on phones
@@ -3979,11 +3986,12 @@
       const nearestStation = (z) => stationZs.reduce((a, b) => Math.abs(b - z) < Math.abs(a - z) ? b : a, stationZs[0]);
 
       /* ---------- Render loop with adaptive quality ---------- */
-      let ready = false, frames = 0, tStart = 0, tuned = false;
+      let ready = false, frames = 0, tStart = 0, tuned = false, prev = 0;
       function tick(now) {
         requestAnimationFrame(tick);
-        if (document.hidden) return;
+        if (document.hidden) { prev = now; return; }
         const t = now * 0.001;
+        const dt = prev ? Math.min(0.05, (now - prev) / 1000) : 0.016; prev = now;
 
         const p = Math.min(1, Math.max(0, scrollY / scrollMax));
         camZ = lerp(camZ, startZ + p * (endZ - startZ), 0.06);
@@ -3992,6 +4000,9 @@
         camera.position.y = -my * 1.0;
         camera.position.z = camZ;
         camera.lookAt(mx * 2.0, -my * 1.5, camZ - 12);
+
+        applyIgnition(dt);        // Wow #1 — globe assembles from particles
+        updateAtmosphere(camZ);   // cross-fade fog / lights / exposure / DOM tint
 
         if (bokeh.enabled) {
           const featured = nearestStation(camZ - 8);
@@ -4028,8 +4039,10 @@
         }
       }
 
-      if (reduce) { composer.render(); canvas.classList.add('ready'); }
-      else requestAnimationFrame(tick);
+      if (reduce) {
+        applyIgnition(1); updateAtmosphere(camZ);
+        composer.render(); canvas.classList.add('ready');
+      } else requestAnimationFrame(tick);
 
       /* ---------- Resize ---------- */
       function onResize() {
