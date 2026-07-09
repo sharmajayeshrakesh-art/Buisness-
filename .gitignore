@@ -1,0 +1,9 @@
+# Local dev tooling (Playwright verification harness) — not part of the deliverable
+node_modules/
+package.json
+package-lock.json
+
+# Scratch / test artifacts
+*.png
+test3d.test.html
+index.test.html
