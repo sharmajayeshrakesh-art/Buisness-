@@ -5547,112 +5547,192 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
       }
       const D = new THREE.Object3D();
 
-      /* --- RESTAURANT — warm gourmet plate under rising embers --- */
+      /* --- RESTAURANT — a silver serving cloche over a plate, steam curling
+             from the rim. Clearly fine dining, not a ringed planet. --- */
       {
         const g = new THREE.Group();
-        const plate = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.35, 0.16, 56),
-          new THREE.MeshStandardMaterial({ color: 0x1a1206, metalness: 1, roughness: 0.24, envMapIntensity: 1.4, transparent: true }));
-        const rim = new THREE.Mesh(new THREE.TorusGeometry(2.2, 0.08, 16, 64),
-          new THREE.MeshStandardMaterial({ color: 0xffcf8a, metalness: 1, roughness: 0.2, emissive: 0x3a1a00, emissiveIntensity: 0.5, transparent: true }));
-        rim.rotation.x = Math.PI / 2; rim.position.y = 0.09;
-        const dome = new THREE.Mesh(new THREE.SphereGeometry(1.3, 32, 20),
-          new THREE.MeshStandardMaterial({ color: 0x2a1a08, metalness: 0.9, roughness: 0.3, emissive: 0x180a00, emissiveIntensity: 0.3, transparent: true }));
-        dome.position.y = 0.5; dome.scale.y = 0.7;
-        const EM = mobile ? 500 : 1100;
+        const parts = [];
+        const plate = new THREE.Mesh(new THREE.CylinderGeometry(2.15, 2.3, 0.14, 64),
+          new THREE.MeshStandardMaterial({ color: 0x0f0b06, metalness: 0.4, roughness: 0.16, envMapIntensity: 1.4, transparent: true }));
+        plate.position.y = -0.16;
+        const well = new THREE.Mesh(new THREE.CylinderGeometry(1.7, 1.78, 0.05, 64),
+          new THREE.MeshStandardMaterial({ color: 0x201608, metalness: 0.5, roughness: 0.3, transparent: true }));
+        well.position.y = -0.08;
+        // Domed cloche (upper hemisphere) — warm gold-silver metal.
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(1.5, 56, 32, 0, Math.PI * 2, 0, Math.PI / 2),
+          new THREE.MeshStandardMaterial({ color: 0xd8c79c, metalness: 1, roughness: 0.14, envMapIntensity: 1.8, transparent: true }));
+        dome.position.y = -0.08;
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.16, 16),
+          new THREE.MeshStandardMaterial({ color: 0xe6d6a8, metalness: 1, roughness: 0.2, transparent: true }));
+        stem.position.y = 1.42;
+        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.16, 24, 16),
+          new THREE.MeshStandardMaterial({ color: 0xf0e2b8, metalness: 1, roughness: 0.16, emissive: 0x3a2a08, emissiveIntensity: 0.4, transparent: true }));
+        knob.position.y = 1.54;
+        // Steam escaping the lid rim and curling upward.
+        const EM = mobile ? 200 : 420;
         const eg = new THREE.BufferGeometry(); const ep = new Float32Array(EM * 3); const ev = [];
-        for (let i = 0; i < EM; i++) { const aa = Math.random() * Math.PI * 2, r = Math.random() * 1.9; ep[i*3]=Math.cos(aa)*r; ep[i*3+1]=Math.random()*4.2; ep[i*3+2]=Math.sin(aa)*r; ev.push(0.4+Math.random()*0.9); }
+        for (let i = 0; i < EM; i++) { const aa = Math.random() * 6.283, r = 1.3 + Math.random() * 0.45; ep[i*3]=Math.cos(aa)*r; ep[i*3+1]=Math.random()*3; ep[i*3+2]=Math.sin(aa)*r; ev.push(0.3+Math.random()*0.6); }
         eg.setAttribute('position', new THREE.BufferAttribute(ep, 3));
-        const embers = new THREE.Points(eg, new THREE.PointsMaterial({ color: 0xff8a3c, size: mobile?0.09:0.06, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending }));
-        g.add(plate, rim, dome, embers);
-        g.rotation.x = -0.5;   // tilt the plate up toward the camera
+        const steam = new THREE.Points(eg, new THREE.PointsMaterial({ color: 0xfff0d8, size: mobile?0.11:0.075, transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending }));
+        g.add(plate, well, dome, stem, knob, steam);
+        parts.push({ m: plate.material, b: 1 }, { m: well.material, b: 1 }, { m: dome.material, b: 1 }, { m: stem.material, b: 1 }, { m: knob.material, b: 1 }, { m: steam.material, b: 0.5 });
+        g.rotation.x = -0.16;   // slight tilt so the dome reads as 3D
         register(g, 'restaurant', (t, prox) => {
-          g.rotation.y = t * 0.14;
+          g.rotation.y = t * 0.16;
           const pos = eg.attributes.position.array;
-          for (let i = 0; i < EM; i++) { pos[i*3+1] += ev[i]*0.03; if (pos[i*3+1] > 4.4) pos[i*3+1] = 0; }
+          for (let i = 0; i < EM; i++) { pos[i*3+1] += ev[i]*0.02; if (pos[i*3+1] > 4.2) pos[i*3+1] = 0; }
           eg.attributes.position.needsUpdate = true;
           g.scale.setScalar(0.72 + 0.28 * prox);
-          plate.material.opacity = prox; rim.material.opacity = prox; dome.material.opacity = prox; embers.material.opacity = 0.9 * prox;
+          parts.forEach((p) => p.m.opacity = p.b * prox);
         });
       }
 
-      /* --- TECHNOLOGY — holographic processor with orbiting data --- */
+      /* --- TECHNOLOGY — a real CPU: dark substrate, brushed-metal heat
+             spreader, a full grid of gold pins underneath, glowing traces
+             and orbiting data. Reads as a processor, not a flat box. --- */
       {
         const g = new THREE.Group();
-        const chip = new THREE.Mesh(new THREE.BoxGeometry(3, 0.4, 3),
-          new THREE.MeshStandardMaterial({ color: 0x0a0f16, metalness: 1, roughness: 0.25, emissive: 0x0a2a3a, emissiveIntensity: 0.6, envMapIntensity: 1.4, transparent: true }));
-        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(3.06, 0.44, 3.06)),
-          new THREE.LineBasicMaterial({ color: 0x6fe0ff, transparent: true, opacity: 0.9 }));
-        const grid = new THREE.GridHelper(3, 12, 0x6fe0ff, 0x235a72); grid.position.y = 0.22;
-        grid.material.transparent = true; grid.material.opacity = 0.5;
+        const parts = [];
+        const sub = new THREE.Mesh(new THREE.BoxGeometry(3, 0.3, 3),
+          new THREE.MeshStandardMaterial({ color: 0x0b1016, metalness: 0.6, roughness: 0.42, envMapIntensity: 1, transparent: true }));
+        const ihs = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.24, 2.1),
+          new THREE.MeshStandardMaterial({ color: 0xc6ccd6, metalness: 1, roughness: 0.3, envMapIntensity: 1.6, transparent: true }));
+        ihs.position.y = 0.27;
+        const ihsLine = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.5, 0.26, 1.5)),
+          new THREE.LineBasicMaterial({ color: 0x9aa6ba, transparent: true, opacity: 0.8 })); ihsLine.position.y = 0.27;
+        // pin-1 corner marker (gold dot)
+        const mark = new THREE.Mesh(new THREE.CircleGeometry(0.11, 20),
+          new THREE.MeshBasicMaterial({ color: 0xffd27a, transparent: true }));
+        mark.rotation.x = -Math.PI / 2; mark.position.set(-1.22, 0.16, 1.22);
+        // full grid of gold contact pins on the underside
+        const PG = mobile ? 9 : 14, NP = PG * PG;
+        const pins = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.05, 0.05, 0.22, 8),
+          new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 1, roughness: 0.32, emissive: 0x3a2a00, emissiveIntensity: 0.4, transparent: true }), NP);
+        { const gap = 2.6 / (PG - 1); for (let i = 0; i < NP; i++) { D.position.set(-1.3 + (i % PG) * gap, -0.28, -1.3 + ((i / PG) | 0) * gap); D.rotation.set(0, 0, 0); D.scale.set(1, 1, 1); D.updateMatrix(); pins.setMatrixAt(i, D.matrix); } pins.instanceMatrix.needsUpdate = true; }
+        // glowing circuit traces fanning out from the die
+        const tracePts = [];
+        for (let i = 0; i < 12; i++) { const a = 1.12 + Math.random() * 0.35, c = (Math.random() - 0.5) * 2.2;
+          if (Math.random() < 0.5) { tracePts.push(new THREE.Vector3(-a,0.16,c), new THREE.Vector3(-1.5,0.16,c), new THREE.Vector3(a,0.16,c), new THREE.Vector3(1.5,0.16,c)); }
+          else { tracePts.push(new THREE.Vector3(c,0.16,-a), new THREE.Vector3(c,0.16,-1.5), new THREE.Vector3(c,0.16,a), new THREE.Vector3(c,0.16,1.5)); } }
+        const traces = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(tracePts),
+          new THREE.LineBasicMaterial({ color: 0x5fe0ff, transparent: true, opacity: 0.8 }));
+        // orbiting data bits
         const N = 14;
-        const im = new THREE.InstancedMesh(new THREE.BoxGeometry(0.18, 0.18, 0.18),
+        const orbMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.16, 0.16, 0.16),
           new THREE.MeshStandardMaterial({ color: 0x0a2233, emissive: 0x30c0ff, emissiveIntensity: 1.3, metalness: 0.6, roughness: 0.3, transparent: true }), N);
-        const orb = []; for (let i = 0; i < N; i++) orb.push({ r: 2.1 + Math.random()*1.3, a: Math.random()*6.28, y: (Math.random()-0.5)*1.6, s: 0.4 + Math.random()*0.9 });
-        g.add(chip, edges, grid, im);
-        g.rotation.x = -0.42;   // tilt the processor face toward the camera
+        const orb = []; for (let i = 0; i < N; i++) orb.push({ r: 2.0 + Math.random()*1.2, a: Math.random()*6.28, y: 0.3 + (Math.random()-0.3)*1.4, s: 0.4 + Math.random()*0.9 });
+        g.add(sub, ihs, ihsLine, mark, pins, traces, orbMesh);
+        parts.push({ m: sub.material, b: 1 }, { m: ihs.material, b: 1 }, { m: ihsLine.material, b: 0.8 }, { m: mark.material, b: 1 }, { m: pins.material, b: 1 }, { m: orbMesh.material, b: 1 });
+        g.rotation.x = -0.5;   // tilt so the metal top + pins both read
         register(g, 'technology', (t, prox) => {
-          g.rotation.y = t * 0.2; chip.material.emissiveIntensity = 0.5 + 0.3 * Math.sin(t*3);
-          for (let i = 0; i < N; i++) { const o = orb[i]; const aa = o.a + t*o.s; D.position.set(Math.cos(aa)*o.r, o.y, Math.sin(aa)*o.r); D.rotation.set(t, t*1.3, 0); D.scale.setScalar(1); D.updateMatrix(); im.setMatrixAt(i, D.matrix); }
-          im.instanceMatrix.needsUpdate = true;
+          g.rotation.y = t * 0.2;
+          traces.material.opacity = (0.35 + 0.45 * Math.abs(Math.sin(t * 2))) * prox;
+          for (let i = 0; i < N; i++) { const o = orb[i]; const aa = o.a + t*o.s; D.position.set(Math.cos(aa)*o.r, o.y, Math.sin(aa)*o.r); D.rotation.set(t, t*1.3, 0); D.scale.set(1,1,1); D.updateMatrix(); orbMesh.setMatrixAt(i, D.matrix); }
+          orbMesh.instanceMatrix.needsUpdate = true;
           g.scale.setScalar(0.72 + 0.28 * prox);
-          chip.material.opacity = prox; edges.material.opacity = 0.9 * prox; grid.material.opacity = 0.5 * prox; im.material.opacity = prox;
+          parts.forEach((p) => p.m.opacity = p.b * prox);
         });
       }
 
-      /* --- MEDICAL — rotating DNA double helix --- */
+      /* --- MEDICAL — DNA double helix built from real geometry: two beaded
+             backbones (per-instance colour) joined by base-pair rungs. --- */
       {
         const g = new THREE.Group();
-        const N = mobile ? 90 : 150, dy = 0.09, R = 1.3, turns = 3;
-        const sg = new THREE.BufferGeometry(); const sp = new Float32Array(N*2*3); const sc = new Float32Array(N*2*3);
-        const cA = new THREE.Color('#9fd6ff'), cB = new THREE.Color('#3f8fff'); const rungPts = [];
-        for (let i = 0; i < N; i++) { const aa = i*(Math.PI*2*turns/N); const y = i*dy - N*dy/2;
-          const x1=Math.cos(aa)*R, z1=Math.sin(aa)*R, x2=Math.cos(aa+Math.PI)*R, z2=Math.sin(aa+Math.PI)*R;
-          sp[i*6]=x1; sp[i*6+1]=y; sp[i*6+2]=z1; sp[i*6+3]=x2; sp[i*6+4]=y; sp[i*6+5]=z2;
-          cA.toArray(sc, i*6); cB.toArray(sc, i*6+3);
-          if (i % 3 === 0) rungPts.push(new THREE.Vector3(x1,y,z1), new THREE.Vector3(x2,y,z2));
+        const parts = [];
+        const N = mobile ? 62 : 108, dy = 0.115, R = 1.15, turns = 2.6;
+        const beadMat = new THREE.MeshStandardMaterial({ metalness: 0.3, roughness: 0.35, emissive: 0x0a2a55, emissiveIntensity: 0.5, transparent: true });
+        const beads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.11, 10, 10), beadMat, N * 2);
+        const rungMat = new THREE.MeshStandardMaterial({ color: 0x8fd0ff, metalness: 0.2, roughness: 0.45, emissive: 0x244f7a, emissiveIntensity: 0.4, transparent: true });
+        const NR = Math.ceil(N / 3);
+        const rungs = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.045, 0.045, 1, 8), rungMat, NR);
+        const cA = new THREE.Color('#bfe4ff'), cB = new THREE.Color('#3f8fff');
+        const UP = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3();
+        let ri = 0;
+        for (let i = 0; i < N; i++) {
+          const a = i * (Math.PI * 2 * turns / N), y = i * dy - N * dy / 2;
+          const x1 = Math.cos(a) * R, z1 = Math.sin(a) * R, x2 = -x1, z2 = -z1;
+          D.position.set(x1, y, z1); D.rotation.set(0, 0, 0); D.scale.set(1, 1, 1); D.updateMatrix(); beads.setMatrixAt(i*2, D.matrix); beads.setColorAt(i*2, cA);
+          D.position.set(x2, y, z2); D.updateMatrix(); beads.setMatrixAt(i*2+1, D.matrix); beads.setColorAt(i*2+1, cB);
+          if (i % 3 === 0 && ri < NR) {
+            dir.set(x1, 0, z1).normalize();
+            D.position.set(0, y, 0); D.quaternion.setFromUnitVectors(UP, dir); D.scale.set(1, 2 * R, 1); D.updateMatrix();
+            rungs.setMatrixAt(ri, D.matrix); ri++;
+          }
         }
-        sg.setAttribute('position', new THREE.BufferAttribute(sp, 3)); sg.setAttribute('color', new THREE.BufferAttribute(sc, 3));
-        const strands = new THREE.Points(sg, new THREE.PointsMaterial({ size: 0.13, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, blending: THREE.AdditiveBlending }));
-        const rungs = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(rungPts),
-          new THREE.LineBasicMaterial({ color: 0x5fa8ff, transparent: true, opacity: 0.4 }));
-        g.add(strands, rungs);
-        register(g, 'medical', (t, prox) => { g.rotation.y = t * 0.5; g.scale.setScalar(0.72 + 0.28*prox); strands.material.opacity = 0.95*prox; rungs.material.opacity = 0.4*prox; });
+        beads.instanceMatrix.needsUpdate = true; if (beads.instanceColor) beads.instanceColor.needsUpdate = true;
+        rungs.instanceMatrix.needsUpdate = true;
+        g.add(beads, rungs);
+        parts.push({ m: beadMat, b: 1 }, { m: rungMat, b: 1 });
+        register(g, 'medical', (t, prox) => { g.rotation.y = t * 0.5; g.scale.setScalar(0.72 + 0.28 * prox); parts.forEach((p) => p.m.opacity = p.b * prox); });
       }
 
-      /* --- REAL ESTATE — tapered glass tower (GPU instanced) --- */
+      /* --- REAL ESTATE — a glass skyscraper: three setback tiers of
+             reflective glass, lit floor lines, a crowning spire. --- */
       {
         const g = new THREE.Group();
-        const N = mobile ? 24 : 40;
-        const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1.6, 0.5, 1.6),
-          new THREE.MeshStandardMaterial({ color: 0xdfe6ff, metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.4, envMapIntensity: 1.7 }), N);
-        const base = []; for (let i = 0; i < N; i++) base[i] = { y: i*0.5 - N*0.25, rot: i*0.32 };
-        g.add(im);
+        const parts = [];
+        const glassMat = new THREE.MeshStandardMaterial({ color: 0xaac2e0, metalness: 0.25, roughness: 0.06, envMapIntensity: 1.9, transparent: true, opacity: 0.5 });
+        const tiers = [ { w: 1.9, h: 3.2, y: -2.4 }, { w: 1.45, h: 2.6, y: 0.5 }, { w: 1.0, h: 2.0, y: 2.8 } ];
+        const meshes = [], floorPts = [];
+        tiers.forEach((tr) => {
+          const box = new THREE.Mesh(new THREE.BoxGeometry(tr.w, tr.h, tr.w), glassMat);
+          box.position.y = tr.y; meshes.push(box);
+          const half = tr.w / 2, y0 = tr.y - tr.h / 2, floors = Math.max(2, Math.round(tr.h / 0.34));
+          for (let f = 1; f < floors; f++) { const y = y0 + f * (tr.h / floors);
+            floorPts.push(new THREE.Vector3(-half,y,-half), new THREE.Vector3(half,y,-half),
+              new THREE.Vector3(half,y,-half), new THREE.Vector3(half,y,half),
+              new THREE.Vector3(half,y,half), new THREE.Vector3(-half,y,half),
+              new THREE.Vector3(-half,y,half), new THREE.Vector3(-half,y,-half));
+          }
+        });
+        const frame = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(floorPts),
+          new THREE.LineBasicMaterial({ color: 0xffe6b0, transparent: true, opacity: 0.5 }));
+        const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.12, 1.2, 12),
+          new THREE.MeshStandardMaterial({ color: 0xfff0cf, metalness: 1, roughness: 0.2, emissive: 0x554015, emissiveIntensity: 0.6, transparent: true }));
+        spire.position.y = 4.4;
+        g.add(meshes[0], meshes[1], meshes[2], frame, spire);
+        parts.push({ m: glassMat, b: 0.5 }, { m: frame.material, b: 0.5 }, { m: spire.material, b: 1 });
         register(g, 'realestate', (t, prox) => {
-          for (let i = 0; i < N; i++) { const bb = base[i]; const w = Math.max(0.2, 1 - Math.abs(bb.y)/(N*0.28)) * 1.4 * prox; D.position.set(0, bb.y, 0); D.rotation.y = bb.rot + t*0.1; D.scale.set(w, 1, w); D.updateMatrix(); im.setMatrixAt(i, D.matrix); }
-          im.instanceMatrix.needsUpdate = true; g.rotation.y = t * 0.12; im.material.opacity = 0.4 * prox;
+          g.rotation.y = t * 0.16; g.scale.setScalar(0.72 + 0.28 * prox);
+          parts.forEach((p) => p.m.opacity = p.b * prox);
         });
       }
 
-      /* --- TRAVEL — paper plane arcing through drifting clouds --- */
+      /* --- TRAVEL — a little airliner (fuselage, wings, tail, nose) banking
+             through drifting clouds, leaving a contrail. --- */
       {
         const g = new THREE.Group();
-        const plane = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.6, 4),
-          new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.2, roughness: 0.4, emissive: 0x88bbff, emissiveIntensity: 0.3, transparent: true }));
-        plane.rotation.z = Math.PI / 2; plane.scale.set(1, 1, 0.3);
-        const TR = 120; const tg = new THREE.BufferGeometry(); const tp = new Float32Array(TR*3);
+        const parts = [];
+        const plane = new THREE.Group();
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf2f5fa, metalness: 0.5, roughness: 0.35, envMapIntensity: 1.3, transparent: true });
+        const accentMat = new THREE.MeshStandardMaterial({ color: 0x5aa0ff, metalness: 0.4, roughness: 0.4, emissive: 0x1a3a66, emissiveIntensity: 0.5, transparent: true });
+        const fus = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.13, 1.9, 18), bodyMat); fus.rotation.z = Math.PI / 2;
+        const nose = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.5, 18), bodyMat); nose.rotation.z = -Math.PI / 2; nose.position.x = 1.2;
+        const wing = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.05, 2.5), bodyMat); wing.position.x = -0.05;
+        const tailW = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.04, 1.1), bodyMat); tailW.position.x = -0.85;
+        const fin = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.05), accentMat); fin.position.set(-0.85, 0.24, 0);
+        const stripe = new THREE.Mesh(new THREE.CylinderGeometry(0.163, 0.133, 0.22, 18), accentMat); stripe.rotation.z = Math.PI / 2; stripe.position.x = -0.45;
+        plane.add(fus, nose, wing, tailW, fin, stripe); plane.scale.setScalar(0.9);
+        parts.push({ m: bodyMat, b: 1 }, { m: accentMat, b: 1 });
+        const TR = 110; const tg = new THREE.BufferGeometry(); const tp = new Float32Array(TR*3);
         tg.setAttribute('position', new THREE.BufferAttribute(tp, 3));
-        const trail = new THREE.Points(tg, new THREE.PointsMaterial({ color: 0xdff0ff, size: 0.08, transparent: true, opacity: 0.7, depthWrite: false, blending: THREE.AdditiveBlending }));
-        const CL = mobile ? 400 : 900; const cg = new THREE.BufferGeometry(); const cp = new Float32Array(CL*3);
+        const trail = new THREE.Points(tg, new THREE.PointsMaterial({ color: 0xdff0ff, size: 0.08, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending }));
+        parts.push({ m: trail.material, b: 0.6 });
+        const CL = mobile ? 380 : 820; const cg = new THREE.BufferGeometry(); const cp = new Float32Array(CL*3);
         for (let i = 0; i < CL; i++) { cp[i*3]=(Math.random()-0.5)*22; cp[i*3+1]=(Math.random()-0.5)*10; cp[i*3+2]=(Math.random()-0.5)*16; }
         cg.setAttribute('position', new THREE.BufferAttribute(cp, 3));
-        const clouds = new THREE.Points(cg, new THREE.PointsMaterial({ color: 0xbcd8ff, size: mobile?0.5:0.4, transparent: true, opacity: 0.18, depthWrite: false }));
+        const clouds = new THREE.Points(cg, new THREE.PointsMaterial({ color: 0xbcd8ff, size: mobile?0.5:0.42, transparent: true, opacity: 0.18, depthWrite: false }));
+        parts.push({ m: clouds.material, b: 0.18 });
         g.add(plane, trail, clouds);
         register(g, 'travel', (t, prox) => {
-          const px = Math.sin(t*0.6)*4, py = Math.cos(t*0.4)*1.5, pz = Math.cos(t*0.6)*2;
-          plane.position.set(px, py, pz); plane.rotation.y = t * 0.6;
-          tp.copyWithin(3, 0, (TR-1)*3); tp[0]=px; tp[1]=py; tp[2]=pz; tg.attributes.position.needsUpdate = true;
+          const px = Math.sin(t*0.6)*4, py = Math.cos(t*0.4)*1.2, pz = Math.cos(t*0.6)*2.4;
+          plane.position.set(px, py, pz);
+          const vx = Math.cos(t*0.6)*4, vz = -Math.sin(t*0.6)*2.4;   // velocity → heading
+          plane.rotation.y = Math.atan2(-vz, vx); plane.rotation.z = Math.sin(t*0.6)*0.3;   // bank into the turn
+          const cy = Math.cos(plane.rotation.y), sy = Math.sin(plane.rotation.y);
+          tp.copyWithin(3, 0, (TR-1)*3); tp[0]=px-cy*1.1; tp[1]=py; tp[2]=pz+sy*1.1; tg.attributes.position.needsUpdate = true;
           clouds.rotation.y = t * 0.02; g.scale.setScalar(0.8 + 0.2*prox);
-          plane.material.opacity = prox; trail.material.opacity = 0.7*prox; clouds.material.opacity = 0.18*prox;
+          parts.forEach((p) => p.m.opacity = p.b * prox);
         });
       }
 
@@ -5812,7 +5892,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         const zs = [0, ...STATIONS.map((s) => s.z)].sort((a, b) => b - a);
         let minGap = Infinity;
         for (let i = 1; i < zs.length; i++) minGap = Math.min(minGap, Math.abs(zs[i] - zs[i - 1]));
-        if (isFinite(minGap)) fadeRange = Math.max(9, Math.min(18, minGap * 0.46));
+        if (isFinite(minGap)) fadeRange = Math.max(6, Math.min(15, minGap * 0.44));
       }
       const relayout = () => { refreshMax(); alignWorlds(); };
       relayout();
