@@ -5317,7 +5317,9 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
     if (renderer) boot();
 
     function boot() {
-      renderer.setPixelRatio(Math.min(devicePixelRatio || 1, mobile ? 1.25 : 1.5));
+      // Keep the fragment load in check: cap DPR to 1 (this is a full-screen
+      // effect behind content, so extra device pixels are pure cost).
+      renderer.setPixelRatio(1);
       renderer.setSize(W, H);
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.05;
@@ -5361,8 +5363,9 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
       const cKey = new THREE.Color(worlds[0].key);
       const cRim = new THREE.Color(worlds[0].rim);
       const tmpA = new THREE.Color(), tmpB = new THREE.Color();
-      // parse "rgba(r,g,b,a)" → [r,g,b,a]
-      const rgba = (s) => s.match(/[\d.]+/g).map(Number);
+      // Pre-parse tint strings ONCE (no per-frame regex/allocation).
+      worlds.forEach((w) => { w.tintArr = w.tint.match(/[\d.]+/g).map(Number); });
+      let lastTint = '';   // only touch the DOM gradient when it actually changes
       function updateAtmosphere(camZ) {
         // find the two worlds bracketing the camera and the blend factor
         let i = 0; while (i < worlds.length - 1 && camZ - 8 < worlds[i + 1].z) i++;
@@ -5374,16 +5377,24 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         cRim.copy(tmpA.set(a.rim)).lerp(tmpB.set(b.rim), f); rim.color.copy(cRim);
         renderer.toneMappingExposure = a.exp + (b.exp - a.exp) * f;
         if (atmosEl) {
-          const ca = rgba(a.tint), cb = rgba(b.tint);
-          const m = ca.map((v, k) => v + (cb[k] - v) * f);
-          atmosEl.style.background =
-            `radial-gradient(120% 100% at 50% 50%, transparent 42%, rgba(${m[0]|0},${m[1]|0},${m[2]|0},${m[3].toFixed(3)}) 100%)`;
+          const ca = a.tintArr, cb = b.tintArr;
+          // quantise so we only rewrite the CSS gradient on visible change
+          const r = (ca[0] + (cb[0] - ca[0]) * f) | 0;
+          const g = (ca[1] + (cb[1] - ca[1]) * f) | 0;
+          const bl = (ca[2] + (cb[2] - ca[2]) * f) | 0;
+          const al = Math.round((ca[3] + (cb[3] - ca[3]) * f) * 50) / 50;
+          const key2 = r + '|' + g + '|' + bl + '|' + al;
+          if (key2 !== lastTint) {
+            lastTint = key2;
+            atmosEl.style.background =
+              'radial-gradient(120% 100% at 50% 50%, transparent 42%, rgba(' + r + ',' + g + ',' + bl + ',' + al + ') 100%)';
+          }
         }
       }
 
       // ---- Global drifting starfield spanning the whole corridor, so every
       //      section keeps atmospheric depth even between the 3D stations. ----
-      const FIELD = mobile ? 3200 : 6500;
+      const FIELD = mobile ? 1600 : 3400;
       const fg = new THREE.BufferGeometry();
       const fp = new Float32Array(FIELD * 3), fc = new Float32Array(FIELD * 3);
       const sCold = new THREE.Color('#cfd8ff'), sWarm = new THREE.Color('#ffdca0');
@@ -5447,7 +5458,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
 
       // Halo particles double as the IGNITION: they start scattered far out
       // and converge onto the shell as the globe "ignites" on entry (Wow #1).
-      const HALO = mobile ? 700 : 1600;
+      const HALO = mobile ? 500 : 1000;
       const haloGeo = new THREE.BufferGeometry();
       const haloTarget = new Float32Array(HALO * 3);   // final shell position
       const haloStart = new Float32Array(HALO * 3);    // scattered origin
@@ -5626,16 +5637,16 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
       try {
         if (EffectComposer && RenderPass && UnrealBloomPass) {
           composer = new EffectComposer(renderer);
-          composer.setPixelRatio(renderer.getPixelRatio());
+          composer.setPixelRatio(1);
           composer.setSize(W, H);
           composer.addPass(new RenderPass(scene, camera));
-          bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.5, 0.5, 0.9);
+          // Bloom at HALF resolution — it's a soft glow, so the downscale is
+          // invisible but roughly quarters the pass cost.
+          bloom = new UnrealBloomPass(new THREE.Vector2(W * 0.5, H * 0.5), 0.5, 0.5, 0.9);
           composer.addPass(bloom);
-          if (BokehPass) {
-            bokeh = new BokehPass(scene, camera, { focus: 8.0, aperture: 0.00022, maxblur: 0.007 });
-            bokeh.enabled = !mobile;      // DOF is the priciest pass — off on phones
-            composer.addPass(bokeh);
-          }
+          // Depth of field (Bokeh) is by far the most expensive pass — leave it
+          // OFF by default; the adaptive monitor never turns it back on.
+          bokeh = null;
           // r128 has no OutputPass — a gamma pass converts linear → sRGB.
           if (THREE.GammaCorrectionShader) composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));
         }
@@ -5694,13 +5705,34 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         return best;
       };
 
-      /* ---------- Render loop with adaptive quality ---------- */
-      let ready = false, frames = 0, tStart = 0, tuned = false, prev = 0;
+      /* ---------- Render loop: framerate cap + CONTINUOUS adaptive quality ----------
+         Frame-cap to ~48fps (halves the load vs a 120Hz display) and keep a
+         rolling FPS estimate. If it stays low, step quality DOWN progressively
+         — never up — so the scroll thread always has headroom. */
+      let ready = false, prev = 0, last = 0;
+      let frameMs = 16, qLevel = 0, qTimer = 0;
+      let targetFps = 48, frameInterval = 1000 / targetFps;
       function tick(now) {
         requestAnimationFrame(tick);
-        if (document.hidden) { prev = now; return; }
+        if (document.hidden) { last = now; prev = now; return; }
+        if (now - last < frameInterval) return;   // framerate cap
+        const dt = prev ? Math.min(0.05, (now - last) / 1000) : 0.016;
+        last = now; prev = now;
         const t = now * 0.001;
-        const dt = prev ? Math.min(0.05, (now - prev) / 1000) : 0.016; prev = now;
+
+        // rolling frame time → adaptive quality
+        frameMs += ((dt * 1000) - frameMs) * 0.1;
+        qTimer += dt;
+        if (qTimer > 1.5 && qLevel < 3) {
+          qTimer = 0;
+          const fps = 1000 / frameMs;
+          if (fps < targetFps - 8) {   // sustained shortfall → step down
+            qLevel++;
+            if (qLevel === 1 && bloom) { bloom.strength = 0.32; }     // dim bloom
+            else if (qLevel === 2) { composer = null; }               // drop all post-processing
+            else if (qLevel === 3) { targetFps = 34; frameInterval = 1000 / targetFps; } // lower cap
+          }
+        }
 
         const p = Math.min(1, Math.max(0, scrollY / scrollMax));
         camZ = lerp(camZ, startZ + p * (endZ - startZ), 0.06);
@@ -5741,17 +5773,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         }
 
         renderFrame();
-
-        if (!ready) { ready = true; canvas.classList.add('ready'); tStart = now; }
-        if (!tuned) {
-          frames++;
-          if (now - tStart > 1400) {
-            const fps = frames / ((now - tStart) / 1000);
-            if (fps < 46 && bokeh) bokeh.enabled = false;
-            if (fps < 32) { if (bloom) bloom.strength = 0.4; renderer.setPixelRatio(1); if (composer) composer.setPixelRatio(1); onResize(); }
-            tuned = true;
-          }
-        }
+        if (!ready) { ready = true; canvas.classList.add('ready'); }
       }
 
       if (reduce) {
@@ -5765,7 +5787,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         camera.aspect = W / H; camera.updateProjectionMatrix();
         renderer.setSize(W, H);
         if (composer) composer.setSize(W, H);
-        if (bloom) bloom.setSize(W, H);
+        if (bloom) bloom.setSize(W * 0.5, H * 0.5);
         refreshMax(); alignWorlds();
       }
       let rt2; addEventListener('resize', () => { clearTimeout(rt2); rt2 = setTimeout(onResize, 180); }, { passive: true });
