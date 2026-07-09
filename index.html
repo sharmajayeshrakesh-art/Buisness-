@@ -1927,6 +1927,59 @@
       -webkit-text-stroke: 1px rgba(240,240,240,0.5);
     }
 
+    /* ---- 16.24 THE WORLDS — cinematic industry journey ---- */
+    .worlds { position: relative; z-index: 2; }
+    .worlds-intro {
+      max-width: var(--max); margin: 0 auto; padding: 140px 32px 40px; text-align: center;
+    }
+    .worlds-intro .section-title { margin: 0 auto; }
+    .worlds-intro .section-lead { margin-left: auto; margin-right: auto; }
+    .world-panel {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 0 8vw;
+      position: relative;
+    }
+    .world-panel:nth-child(even) { justify-content: flex-end; text-align: right; }
+    .world-copy {
+      max-width: 600px;
+      opacity: 0;
+      transform: translateY(48px);
+      transition: opacity 1s var(--ease), transform 1s var(--ease);
+      will-change: transform, opacity;
+    }
+    .world-copy.in { opacity: 1; transform: none; }
+    .world-copy .w-eyebrow {
+      display: block;
+      font-family: var(--font-body);
+      font-size: 0.74rem; letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--wa, var(--gold)); margin-bottom: 22px;
+    }
+    .world-copy h2 {
+      font-size: clamp(2.4rem, 6.5vw, 5rem);
+      line-height: 1.04; color: var(--text); margin-bottom: 24px;
+      text-shadow: 0 2px 40px rgba(0,0,0,0.6);
+    }
+    .world-copy p {
+      font-size: 1.12rem; line-height: 1.7; color: var(--text-dim); max-width: 44ch;
+      text-shadow: 0 2px 24px rgba(0,0,0,0.7);
+    }
+    .world-panel:nth-child(even) .world-copy p { margin-left: auto; }
+    .w-preview {
+      margin-top: 30px;
+      background: none; border: none; cursor: pointer;
+      font-family: var(--font-body); font-weight: 600; font-size: 0.9rem;
+      letter-spacing: 0.04em; color: var(--wa, var(--gold));
+      position: relative; padding: 4px 0;
+    }
+    .w-preview::after {
+      content: ""; position: absolute; left: 0; bottom: 0; width: 100%; height: 1px;
+      background: currentColor; transform: scaleX(0.4); transform-origin: left;
+      transition: transform 0.45s var(--ease);
+    }
+    .w-preview:hover::after { transform: scaleX(1); }
+
     /* ---- 16.16 Responsive for the new sections ---- */
     @media (max-width: 900px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
@@ -1942,6 +1995,11 @@
       .cap-card { min-height: auto; }
       .foot-big { padding: 60px 0 30px; }
       .foot-row { flex-direction: column; text-align: center; gap: 24px; }
+      /* Worlds: single-column, centred, a touch shorter on phones */
+      .world-panel, .world-panel:nth-child(even) { justify-content: center; text-align: center; padding: 0 24px; min-height: 92vh; }
+      .world-copy { max-width: 100%; }
+      .world-panel:nth-child(even) .world-copy p, .world-copy p { margin-left: auto; margin-right: auto; }
+      .worlds-intro { padding: 100px 22px 20px; }
     }
     @media (max-width: 560px) {
       .stats-grid { grid-template-columns: 1fr; }
@@ -2117,64 +2175,55 @@
     </div>
   </section>
 
-  <!-- ================= INDUSTRY DEMOS ================= -->
-  <section class="demos" id="work">
-    <div class="wrap">
+  <!-- ================= THE WORLDS (cinematic industry journey) =================
+       Each panel's copy is aligned by JS to its 3D world, so as you scroll the
+       matching hero object centres behind the text and the atmosphere shifts. -->
+  <section class="worlds" id="work">
+    <div class="worlds-intro">
       <span class="eyebrow reveal">Made For Your Industry</span>
-      <h2 class="section-title reveal">A glimpse of what your site could be.</h2>
+      <h2 class="section-title reveal">Every business is a different world.</h2>
+      <p class="section-lead reveal">Keep scrolling — you'll travel through a few of them.</p>
+    </div>
 
-      <div class="demo-grid">
-        <!-- Restaurant -->
-        <article class="demo-card reveal" data-hover data-demo="restaurant"
-                 style="--accent:#E4572E; --accent-soft:rgba(228,87,46,0.20)">
-          <div class="overlay"></div>
-          <div class="demo-icon">🍽</div>
-          <div class="demo-thumb" aria-hidden="true"><i></i><i></i><i></i></div>
-          <div class="demo-meta">
-            <span class="demo-type">Restaurant</span>
-            <div class="demo-name">Saffron Table</div>
-            <button class="demo-preview" type="button" data-hover>Preview</button>
-          </div>
-        </article>
+    <div class="world-panel" data-world="restaurant" style="--wa:#ff8a4c">
+      <div class="world-copy">
+        <span class="w-eyebrow">Restaurant</span>
+        <h2>Make them hungry<br>before they arrive.</h2>
+        <p>Sizzling visuals, living menus and one-tap reservations that keep tables full — a site that sells the experience, not just the address.</p>
+        <button class="w-preview" type="button" data-demo="restaurant" data-hover>See a live example →</button>
+      </div>
+    </div>
 
-        <!-- Medical Clinic -->
-        <article class="demo-card reveal" data-hover data-demo="clinic"
-                 style="--accent:#3FA7D6; --accent-soft:rgba(63,167,214,0.20)">
-          <div class="overlay"></div>
-          <div class="demo-icon">✚</div>
-          <div class="demo-thumb" aria-hidden="true"><i></i><i></i><i></i></div>
-          <div class="demo-meta">
-            <span class="demo-type">Medical Clinic</span>
-            <div class="demo-name">Prisha Care</div>
-            <button class="demo-preview" type="button" data-hover>Preview</button>
-          </div>
-        </article>
+    <div class="world-panel" data-world="technology" style="--wa:#7fd0ff">
+      <div class="world-copy">
+        <span class="w-eyebrow">Technology</span>
+        <h2>Software that feels<br>like the future.</h2>
+        <p>Product sites, dashboards and launch pages engineered to feel effortless, fast and unmistakably modern — the kind of polish that signals you're serious.</p>
+      </div>
+    </div>
 
-        <!-- Boutique / Fashion -->
-        <article class="demo-card reveal" data-hover data-demo="boutique"
-                 style="--accent:#C879C4; --accent-soft:rgba(200,121,196,0.20)">
-          <div class="overlay"></div>
-          <div class="demo-icon">◈</div>
-          <div class="demo-thumb" aria-hidden="true"><i></i><i></i><i></i></div>
-          <div class="demo-meta">
-            <span class="demo-type">Boutique &amp; Fashion</span>
-            <div class="demo-name">Maison Rue</div>
-            <button class="demo-preview" type="button" data-hover>Preview</button>
-          </div>
-        </article>
+    <div class="world-panel" data-world="medical" style="--wa:#5fb0ff">
+      <div class="world-copy">
+        <span class="w-eyebrow">Healthcare</span>
+        <h2>Trust, built<br>pixel by pixel.</h2>
+        <p>Calm, precise, reassuring experiences with effortless booking — the digital front door that turns anxious visitors into confident patients.</p>
+        <button class="w-preview" type="button" data-demo="clinic" data-hover>See a live example →</button>
+      </div>
+    </div>
 
-        <!-- Coaching Institute -->
-        <article class="demo-card reveal" data-hover data-demo="coaching"
-                 style="--accent:#5FBF77; --accent-soft:rgba(95,191,119,0.20)">
-          <div class="overlay"></div>
-          <div class="demo-icon">✎</div>
-          <div class="demo-thumb" aria-hidden="true"><i></i><i></i><i></i></div>
-          <div class="demo-meta">
-            <span class="demo-type">Coaching Institute</span>
-            <div class="demo-name">Apex Academy</div>
-            <button class="demo-preview" type="button" data-hover>Preview</button>
-          </div>
-        </article>
+    <div class="world-panel" data-world="realestate" style="--wa:#ffd98a">
+      <div class="world-copy">
+        <span class="w-eyebrow">Real Estate</span>
+        <h2>Sell the lifestyle,<br>not the square feet.</h2>
+        <p>Immersive tours, cinematic listings and buttery galleries that make a property impossible to scroll past — and impossible to forget.</p>
+      </div>
+    </div>
+
+    <div class="world-panel" data-world="travel" style="--wa:#a9e0ff">
+      <div class="world-copy">
+        <span class="w-eyebrow">Travel</span>
+        <h2>Sell the feeling<br>of being there.</h2>
+        <p>Stories, itineraries and booking flows so vivid people start packing before they've finished reading. Wanderlust, engineered.</p>
       </div>
     </div>
   </section>
@@ -5162,6 +5211,23 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         });
       }
 
+      /* 24. WORLDS JOURNEY — reveal each panel's copy as it centres, and wire
+         the "see a live example" buttons to the detailed demo modals. */
+      function initWorldPanels() {
+        const copies = document.querySelectorAll(".world-copy");
+        if (copies.length && "IntersectionObserver" in window && !prefersReduced) {
+          const io = new IntersectionObserver((entries) => {
+            entries.forEach((en) => en.target.classList.toggle("in", en.isIntersecting));
+          }, { threshold: 0.35 });
+          copies.forEach((c) => io.observe(c));
+        } else {
+          copies.forEach((c) => c.classList.add("in"));
+        }
+        document.querySelectorAll(".w-preview[data-demo]").forEach((btn) => {
+          btn.addEventListener("click", () => openDemo(btn.getAttribute("data-demo")));
+        });
+      }
+
       /* --------------------------------------------------------
          10. INIT
          -------------------------------------------------------- */
@@ -5191,6 +5257,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         initFAQ();
         initRipple();
         initCursorLabels();
+        initWorldPanels();
 
         // New sections changed the page height — recompute cached max + ST.
         refreshScrollMax();
@@ -5282,12 +5349,12 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
          cross-fades between them, so scrolling literally moves you through
          different worlds instead of one flat dark page. */
       const worlds = [
-        { z: Z.hero,       fog: '#05060a', key: '#fff1d6', rim: '#6f8dff', exp: 0.92, tint: 'rgba(201,168,76,0.16)' }, // Origin — gold
-        { z: Z.restaurant, fog: '#0b0603', key: '#ffb066', rim: '#ff7a3c', exp: 1.05, tint: 'rgba(255,150,80,0.20)' },  // Restaurant — warm amber/fire
-        { z: Z.technology, fog: '#03060f', key: '#7fe0ff', rim: '#b06bff', exp: 1.16, tint: 'rgba(90,180,255,0.22)' },  // Technology — neon cyan/violet
-        { z: Z.medical,    fog: '#030a16', key: '#cfe6ff', rim: '#3f8fff', exp: 1.00, tint: 'rgba(70,150,255,0.20)' },  // Medical — cobalt blue
-        { z: Z.realestate, fog: '#0b0906', key: '#fff2d6', rim: '#ffe0a0', exp: 1.16, tint: 'rgba(255,225,160,0.16)' }, // Real Estate — warm white/gold
-        { z: Z.travel,     fog: '#061019', key: '#dff0ff', rim: '#8fd0ff', exp: 1.10, tint: 'rgba(150,200,255,0.20)' }, // Travel — open sky
+        { id: 'hero',       z: Z.hero,       fog: '#05060a', key: '#fff1d6', rim: '#6f8dff', exp: 0.92, tint: 'rgba(201,168,76,0.16)' }, // Origin — gold
+        { id: 'restaurant', z: Z.restaurant, fog: '#0b0603', key: '#ffb066', rim: '#ff7a3c', exp: 1.05, tint: 'rgba(255,150,80,0.20)' },  // Restaurant — warm amber/fire
+        { id: 'technology', z: Z.technology, fog: '#03060f', key: '#7fe0ff', rim: '#b06bff', exp: 1.16, tint: 'rgba(90,180,255,0.22)' },  // Technology — neon cyan/violet
+        { id: 'medical',    z: Z.medical,    fog: '#030a16', key: '#cfe6ff', rim: '#3f8fff', exp: 1.00, tint: 'rgba(70,150,255,0.20)' },  // Medical — cobalt blue
+        { id: 'realestate', z: Z.realestate, fog: '#0b0906', key: '#fff2d6', rim: '#ffe0a0', exp: 1.16, tint: 'rgba(255,225,160,0.16)' }, // Real Estate — warm white/gold
+        { id: 'travel',     z: Z.travel,     fog: '#061019', key: '#dff0ff', rim: '#8fd0ff', exp: 1.10, tint: 'rgba(150,200,255,0.20)' }, // Travel — open sky
       ];
       const atmosEl = document.getElementById('atmos');
       const cFog = new THREE.Color(worlds[0].fog);
@@ -5426,8 +5493,9 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
          how close the camera is — driving a materialize / dematerialize
          dissolve so worlds transform into one another as you travel. */
       const STATIONS = [];
-      function register(group, z, update) {
-        group.position.z = z; group.visible = false; scene.add(group); STATIONS.push({ group, z, update });
+      function register(group, key, update) {
+        group.position.z = Z[key]; group.visible = false; scene.add(group);
+        STATIONS.push({ group, key, z: Z[key], update });
       }
       const D = new THREE.Object3D();
 
@@ -5449,7 +5517,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         const embers = new THREE.Points(eg, new THREE.PointsMaterial({ color: 0xff8a3c, size: mobile?0.09:0.06, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending }));
         g.add(plate, rim, dome, embers);
         g.rotation.x = -0.5;   // tilt the plate up toward the camera
-        register(g, Z.restaurant, (t, prox) => {
+        register(g, 'restaurant', (t, prox) => {
           g.rotation.y = t * 0.14;
           const pos = eg.attributes.position.array;
           for (let i = 0; i < EM; i++) { pos[i*3+1] += ev[i]*0.03; if (pos[i*3+1] > 4.4) pos[i*3+1] = 0; }
@@ -5474,7 +5542,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         const orb = []; for (let i = 0; i < N; i++) orb.push({ r: 2.1 + Math.random()*1.3, a: Math.random()*6.28, y: (Math.random()-0.5)*1.6, s: 0.4 + Math.random()*0.9 });
         g.add(chip, edges, grid, im);
         g.rotation.x = -0.42;   // tilt the processor face toward the camera
-        register(g, Z.technology, (t, prox) => {
+        register(g, 'technology', (t, prox) => {
           g.rotation.y = t * 0.2; chip.material.emissiveIntensity = 0.5 + 0.3 * Math.sin(t*3);
           for (let i = 0; i < N; i++) { const o = orb[i]; const aa = o.a + t*o.s; D.position.set(Math.cos(aa)*o.r, o.y, Math.sin(aa)*o.r); D.rotation.set(t, t*1.3, 0); D.scale.setScalar(1); D.updateMatrix(); im.setMatrixAt(i, D.matrix); }
           im.instanceMatrix.needsUpdate = true;
@@ -5500,7 +5568,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         const rungs = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(rungPts),
           new THREE.LineBasicMaterial({ color: 0x5fa8ff, transparent: true, opacity: 0.4 }));
         g.add(strands, rungs);
-        register(g, Z.medical, (t, prox) => { g.rotation.y = t * 0.5; g.scale.setScalar(0.72 + 0.28*prox); strands.material.opacity = 0.95*prox; rungs.material.opacity = 0.4*prox; });
+        register(g, 'medical', (t, prox) => { g.rotation.y = t * 0.5; g.scale.setScalar(0.72 + 0.28*prox); strands.material.opacity = 0.95*prox; rungs.material.opacity = 0.4*prox; });
       }
 
       /* --- REAL ESTATE — tapered glass tower (GPU instanced) --- */
@@ -5511,7 +5579,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
           new THREE.MeshStandardMaterial({ color: 0xdfe6ff, metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.4, envMapIntensity: 1.7 }), N);
         const base = []; for (let i = 0; i < N; i++) base[i] = { y: i*0.5 - N*0.25, rot: i*0.32 };
         g.add(im);
-        register(g, Z.realestate, (t, prox) => {
+        register(g, 'realestate', (t, prox) => {
           for (let i = 0; i < N; i++) { const bb = base[i]; const w = Math.max(0.2, 1 - Math.abs(bb.y)/(N*0.28)) * 1.4 * prox; D.position.set(0, bb.y, 0); D.rotation.y = bb.rot + t*0.1; D.scale.set(w, 1, w); D.updateMatrix(); im.setMatrixAt(i, D.matrix); }
           im.instanceMatrix.needsUpdate = true; g.rotation.y = t * 0.12; im.material.opacity = 0.4 * prox;
         });
@@ -5531,7 +5599,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         cg.setAttribute('position', new THREE.BufferAttribute(cp, 3));
         const clouds = new THREE.Points(cg, new THREE.PointsMaterial({ color: 0xbcd8ff, size: mobile?0.5:0.4, transparent: true, opacity: 0.18, depthWrite: false }));
         g.add(plane, trail, clouds);
-        register(g, Z.travel, (t, prox) => {
+        register(g, 'travel', (t, prox) => {
           const px = Math.sin(t*0.6)*4, py = Math.cos(t*0.4)*1.5, pz = Math.cos(t*0.6)*2;
           plane.position.set(px, py, pz); plane.rotation.y = t * 0.6;
           tp.copyWithin(3, 0, (TR-1)*3); tp[0]=px; tp[1]=py; tp[2]=pz; tg.attributes.position.needsUpdate = true;
@@ -5570,18 +5638,42 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
       /* ---------- Scroll + pointer state ---------- */
       let scrollMax = 1;
       const refreshMax = () => { scrollMax = Math.max(1, document.documentElement.scrollHeight - innerHeight); };
-      refreshMax();
-      addEventListener('load', refreshMax); setTimeout(refreshMax, 800); setTimeout(refreshMax, 2200);
+
+      const startZ = 8, endZ = -150;   // fixed camera-travel corridor
+      let camZ = startZ;
+
+      /* Align each world's depth to its DOM panel, so the matching hero object
+         centres behind the copy as it scrolls into view. Recomputed whenever
+         the layout changes. */
+      function alignWorlds() {
+        STATIONS.forEach((st) => {
+          const panel = document.querySelector('.world-panel[data-world="' + st.key + '"]');
+          if (!panel) return;
+          const r = panel.getBoundingClientRect();
+          const center = r.top + scrollY + r.height / 2;
+          const f = Math.min(1, Math.max(0, (center - innerHeight / 2) / scrollMax));
+          const z = startZ + f * (endZ - startZ) - 8;   // camera sits 8 in front
+          st.z = z; st.group.position.z = z;
+          const w = worlds.find((w) => w.id === st.key);
+          if (w) w.z = z;
+        });
+        worlds.sort((a, b) => b.z - a.z);   // keep atmosphere list ordered by depth
+      }
+      const relayout = () => { refreshMax(); alignWorlds(); };
+      relayout();
+      addEventListener('load', relayout); setTimeout(relayout, 400); setTimeout(relayout, 1200); setTimeout(relayout, 2400);
 
       let tmx = 0, tmy = 0, mx = 0, my = 0;
       if (matchMedia('(pointer:fine)').matches) {
         addEventListener('pointermove', (e) => { tmx = e.clientX / W - 0.5; tmy = e.clientY / H - 0.5; }, { passive: true });
       }
 
-      const startZ = 8, endZ = Z.travel + 8;   // fly from the origin globe through to the travel world
-      let camZ = startZ;
-      const stationZs = Object.values(Z);
-      const nearestStation = (z) => stationZs.reduce((a, b) => Math.abs(b - z) < Math.abs(a - z) ? b : a, stationZs[0]);
+      // Nearest station depth (incl. the origin globe at 0) for DOF focus.
+      const nearestStation = (z) => {
+        let best = 0, bd = Math.abs(z);
+        for (const s of STATIONS) { const d = Math.abs(s.z - z); if (d < bd) { bd = d; best = s.z; } }
+        return best;
+      };
 
       /* ---------- Render loop with adaptive quality ---------- */
       let ready = false, frames = 0, tStart = 0, tuned = false, prev = 0;
@@ -5616,7 +5708,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         // nears, dissolve as it leaves. Far worlds are skipped entirely.
         const camPos = camZ - 8;
         for (const st of STATIONS) {
-          const prox = Math.max(0, 1 - Math.abs(camPos - st.z) / 22);
+          const prox = Math.max(0, 1 - Math.abs(camPos - st.z) / 18);
           if (prox <= 0.001) { if (st.group.visible) st.group.visible = false; continue; }
           st.group.visible = true;
           st.update(t, prox, p);
@@ -5648,7 +5740,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         renderer.setSize(W, H);
         if (composer) composer.setSize(W, H);
         if (bloom) bloom.setSize(W, H);
-        refreshMax();
+        refreshMax(); alignWorlds();
       }
       let rt2; addEventListener('resize', () => { clearTimeout(rt2); rt2 = setTimeout(onResize, 180); }, { passive: true });
     }
