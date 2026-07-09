@@ -1982,6 +1982,38 @@
     }
     .w-preview:hover::after { transform: scaleX(1); }
 
+    /* ---- 16.17 BEYOND IMAGINATION — grand finale ---- */
+    .finale-sec { position: relative; z-index: 2; }
+    .finale-panel {
+      min-height: 128vh;                 /* extra travel so the city fully assembles */
+      justify-content: center; text-align: center;
+    }
+    .finale-copy { max-width: 760px; }
+    .finale-copy .finale-eyebrow {
+      color: #ffd9a0;
+      /* subtle shimmer that reads as "the payoff" */
+      background: linear-gradient(90deg, #c9a84c, #ff8a3c, #6fe0ff, #a9e0ff, #c9a84c);
+      background-size: 300% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: finaleShimmer 9s linear infinite;
+    }
+    @keyframes finaleShimmer { to { background-position: 300% 0; } }
+    .finale-copy h2 {
+      font-size: clamp(3rem, 10vw, 7.5rem); line-height: 0.98;
+      letter-spacing: -0.02em;
+    }
+    .finale-copy p { margin-left: auto; margin-right: auto; }
+    .finale-copy .finale-tag {
+      margin-top: 20px; color: var(--text);
+      font-size: 1.18rem; font-weight: 500;
+    }
+    .finale-copy .finale-tag em { color: #ffd9a0; font-style: italic; }
+    .finale-copy .btn { margin-top: 38px; }
+    @media (max-width: 900px) {
+      .finale-panel { min-height: 118vh; padding: 0 24px; }
+    }
+
     /* ---- 16.16 Responsive for the new sections ---- */
     @media (max-width: 900px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
@@ -2226,6 +2258,19 @@
         <span class="w-eyebrow">Travel</span>
         <h2>Sell the feeling<br>of being there.</h2>
         <p>Stories, itineraries and booking flows so vivid people start packing before they've finished reading. Wanderlust, engineered.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BEYOND IMAGINATION — GRAND FINALE ================= -->
+  <section class="finale-sec" id="beyond">
+    <div class="world-panel finale-panel" data-world="finale" style="--wa:#ffd9a0">
+      <div class="world-copy finale-copy">
+        <span class="w-eyebrow finale-eyebrow">The Grand Finale</span>
+        <h2>Beyond<br>imagination.</h2>
+        <p>Five worlds, one studio. The fire, the circuitry, the calm, the light, the horizon — everything you've just travelled through collapses into a single skyline, built for you from the very first particle up.</p>
+        <p class="finale-tag">This is what we do. Now picture it for <em>your</em> business.</p>
+        <a class="btn btn-primary" href="#contact" data-hover>Let's build yours →</a>
       </div>
     </div>
   </section>
@@ -5323,7 +5368,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
       scene.fog = new THREE.FogExp2(new THREE.Color('#05060a'), 0.0085);
 
       // ---- Station depths: Origin + five industry worlds the camera flies through ----
-      const Z = { hero: 0, restaurant: -34, technology: -68, medical: -102, realestate: -136, travel: -170 };
+      const Z = { hero: 0, restaurant: -34, technology: -68, medical: -102, realestate: -136, travel: -170, finale: -150 };
 
       /* ---- ATMOSPHERE ENGINE ----
          Each station carries a whole colour world: fog, key/rim light,
@@ -5337,6 +5382,7 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
         { id: 'medical',    z: Z.medical,    fog: '#030a16', key: '#cfe6ff', rim: '#3f8fff', exp: 1.00, tint: 'rgba(70,150,255,0.20)' },  // Medical — cobalt blue
         { id: 'realestate', z: Z.realestate, fog: '#0b0906', key: '#fff2d6', rim: '#ffe0a0', exp: 1.16, tint: 'rgba(255,225,160,0.16)' }, // Real Estate — warm white/gold
         { id: 'travel',     z: Z.travel,     fog: '#061019', key: '#dff0ff', rim: '#8fd0ff', exp: 1.10, tint: 'rgba(150,200,255,0.20)' }, // Travel — open sky
+        { id: 'finale',     z: Z.finale,     fog: '#070510', key: '#ffe6c0', rim: '#8fb8ff', exp: 1.24, tint: 'rgba(255,214,150,0.20)' }, // Finale — every world unified
       ];
       const atmosEl = document.getElementById('atmos');
       const cFog = new THREE.Color(worlds[0].fog);
@@ -5607,6 +5653,105 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
           tp.copyWithin(3, 0, (TR-1)*3); tp[0]=px; tp[1]=py; tp[2]=pz; tg.attributes.position.needsUpdate = true;
           clouds.rotation.y = t * 0.02; g.scale.setScalar(0.8 + 0.2*prox);
           plane.material.opacity = prox; trail.material.opacity = 0.7*prox; clouds.material.opacity = 0.18*prox;
+        });
+      }
+
+      /* --- FINALE: "BEYOND IMAGINATION" — a city that assembles itself from
+             the particles of every world you've just travelled through. The
+             five industry palettes fuse into one skyline that rises from the
+             ground as you arrive, and dissolves back to a drifting cloud as
+             you leave. This is the climax of the journey. --- */
+      {
+        const c01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
+        const g = new THREE.Group();
+        // Unifying palette — one colour drawn from every world seen so far.
+        const cols = [
+          new THREE.Color('#c9a84c'), // origin gold
+          new THREE.Color('#ff8a3c'), // restaurant fire
+          new THREE.Color('#6fe0ff'), // technology cyan
+          new THREE.Color('#3f8fff'), // medical cobalt
+          new THREE.Color('#ffe0a0'), // real-estate warm gold
+          new THREE.Color('#a9e0ff'), // travel sky
+        ];
+        const FLOOR = -3.2;
+
+        // Ground plane grid — the city's footprint, fades in as it forms.
+        const grid = new THREE.GridHelper(mobile ? 20 : 30, mobile ? 20 : 30, 0xffd9a0, 0x2a3050);
+        grid.material.transparent = true; grid.material.opacity = 0; grid.position.y = FLOOR;
+        g.add(grid);
+
+        // Towers — one GPU-instanced draw call for the whole skyline.
+        const GRID = mobile ? 6 : 9, SP = mobile ? 2.5 : 2.15, NT = GRID * GRID, half = (GRID - 1) / 2;
+        const towerMat = new THREE.MeshStandardMaterial({
+          color: 0xffffff, metalness: 0.82, roughness: 0.3, envMapIntensity: 1.3,
+          emissive: new THREE.Color('#241606'), emissiveIntensity: 0.5, transparent: true, opacity: 0,
+        });
+        const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), towerMat, NT);
+        const tw = [];
+        for (let i = 0; i < NT; i++) {
+          const gx = i % GRID, gz = (i / GRID) | 0;
+          const x = (gx - half) * SP, z = (gz - half) * SP;
+          const dist = Math.hypot(gx - half, gz - half);
+          // taller toward the centre, with organic variation → a real skyline
+          const h = 1.1 + (Math.sin(gx * 1.7) * 0.5 + 0.5) * (Math.cos(gz * 1.3) * 0.5 + 0.5) * 4.6 + Math.max(0, 2.6 - dist) * 0.8;
+          const w = 0.7 + Math.random() * 0.5;
+          im.setColorAt(i, cols[(gx + gz) % cols.length]);
+          tw.push({ x, z, h, w, phase: dist * 0.11 + Math.random() * 0.12 });
+        }
+        if (im.instanceColor) im.instanceColor.needsUpdate = true;
+        g.add(im);
+        g.position.y = -1.6;   // drop the skyline so it reads beneath the copy
+
+        // Particles that stream in from a dispersed cloud to "build" the city.
+        const NP = mobile ? 700 : 1700;
+        const pg = new THREE.BufferGeometry();
+        const pp = new Float32Array(NP * 3), pc = new Float32Array(NP * 3);
+        const home = new Float32Array(NP * 3), scat = new Float32Array(NP * 3);
+        for (let i = 0; i < NP; i++) {
+          const tt = tw[(Math.random() * NT) | 0], k = i * 3;
+          home[k]     = tt.x + (Math.random() - 0.5) * tt.w;
+          home[k + 1] = FLOOR + Math.random() * tt.h;
+          home[k + 2] = tt.z + (Math.random() - 0.5) * tt.w;
+          const aa = Math.random() * 6.283, rr = 9 + Math.random() * 11, yy = (Math.random() - 0.5) * 18;
+          scat[k] = Math.cos(aa) * rr; scat[k + 1] = yy; scat[k + 2] = Math.sin(aa) * rr;
+          pp[k] = scat[k]; pp[k + 1] = scat[k + 1]; pp[k + 2] = scat[k + 2];
+          cols[(Math.random() * cols.length) | 0].toArray(pc, k);
+        }
+        pg.setAttribute('position', new THREE.BufferAttribute(pp, 3));
+        pg.setAttribute('color', new THREE.BufferAttribute(pc, 3));
+        const dust = new THREE.Points(pg, new THREE.PointsMaterial({
+          size: mobile ? 0.12 : 0.085, vertexColors: true, transparent: true, opacity: 0,
+          depthWrite: false, blending: THREE.AdditiveBlending,
+        }));
+        g.add(dust);
+
+        register(g, 'finale', (t, prox) => {
+          const b = smoothstep(prox);                 // overall build progress
+          grid.material.opacity = 0.5 * b;
+          // Towers extrude from the ground, centre-out, with a staggered phase.
+          for (let i = 0; i < NT; i++) {
+            const tt = tw[i];
+            const eh = smoothstep(c01((b - tt.phase) / 0.6)) * tt.h;
+            D.position.set(tt.x, FLOOR + eh / 2, tt.z);
+            D.rotation.set(0, 0, 0);
+            D.scale.set(tt.w, Math.max(0.001, eh), tt.w);
+            D.updateMatrix(); im.setMatrixAt(i, D.matrix);
+          }
+          im.instanceMatrix.needsUpdate = true;
+          towerMat.opacity = b;
+          towerMat.emissiveIntensity = 0.4 + 0.35 * Math.sin(t * 2);
+          // Particles fly scattered → home, with a slight front-to-back stagger.
+          const pos = pg.attributes.position.array;
+          for (let i = 0; i < NP; i++) {
+            const k = i * 3, f = c01(b * 1.18 - (i / NP) * 0.18);
+            pos[k]     = scat[k]     + (home[k]     - scat[k])     * f;
+            pos[k + 1] = scat[k + 1] + (home[k + 1] - scat[k + 1]) * f + Math.sin(t * 1.5 + i) * 0.05 * (1 - f);
+            pos[k + 2] = scat[k + 2] + (home[k + 2] - scat[k + 2]) * f;
+          }
+          pg.attributes.position.needsUpdate = true;
+          dust.material.opacity = (0.3 + 0.5 * (1 - b)) * b;   // brightest mid-build, settles on landing
+          g.rotation.y = t * 0.05 + (1 - b) * 0.5;             // slow orbit, unwinds as the city locks in
+          g.scale.setScalar(0.7 + 0.3 * b);
         });
       }
 
