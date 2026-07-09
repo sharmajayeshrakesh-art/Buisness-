@@ -2371,17 +2371,23 @@
   <!-- SplitType: split headings into chars/words for reveal animations -->
   <script src="https://cdn.jsdelivr.net/npm/split-type@0.3.4/umd/index.min.js"></script>
 
-  <!-- Three.js (modern module build) + addons for the immersive WebGL world.
-       Loaded as ES modules via an import map so postprocessing/env addons
-       resolve to the exact matching version. -->
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-    }
-  }
-  </script>
+  <!-- Three.js (r128) + postprocessing/env addons for the immersive WebGL
+       world, loaded as CLASSIC scripts (attach to the global THREE) so the
+       experience runs on every host — including htmlpreview, which ignores
+       injected ES-module import maps. Order matters: shaders → passes. -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/BokehShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/GammaCorrectionShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/Pass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/MaskPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/BokehPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/environments/RoomEnvironment.js"></script>
 
   <script>
     /* ============================================================
@@ -3675,14 +3681,12 @@
        cubes and buffer-geometry particle systems. Quality auto-tunes to
        sustain framerate; fully skipped for prefers-reduced-motion.
        ============================================================ -->
-  <script type="module">
-    import * as THREE from 'three';
-    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-    import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
-    import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+  <script>
+  (function () {
+    if (typeof THREE === 'undefined') return;   // three failed to load — skip the world
+    const EffectComposer = THREE.EffectComposer, RenderPass = THREE.RenderPass,
+          UnrealBloomPass = THREE.UnrealBloomPass, BokehPass = THREE.BokehPass,
+          RoomEnvironment = THREE.RoomEnvironment;
 
     const canvas = document.getElementById('world');
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -3997,7 +4001,9 @@
       const bokeh = new BokehPass(scene, camera, { focus: 8.0, aperture: 0.00022, maxblur: 0.007 });
       bokeh.enabled = !mobile;          // DOF is the priciest pass — off on phones
       composer.addPass(bokeh);
-      composer.addPass(new OutputPass());
+      // r128 has no OutputPass — a gamma-correction pass converts the linear
+      // composited buffer to sRGB for display (final pass renders to screen).
+      composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));
 
       /* ---------- Scroll + pointer state ---------- */
       let scrollMax = 1;
@@ -4082,6 +4088,7 @@
       }
       let rt2; addEventListener('resize', () => { clearTimeout(rt2); rt2 = setTimeout(onResize, 180); }, { passive: true });
     }
+  })();
   </script>
 </body>
 </html>
