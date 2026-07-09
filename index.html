@@ -1489,8 +1489,27 @@
       50%      { transform: translateY(-22px) rotate(8deg); }
     }
 
-    /* ---- 16.6 Capabilities: animated conic gradient border ---- */
-    .cap-card { isolation: isolate; }
+    /* ---- 16.6 Capabilities: animated conic gradient border + layout ---- */
+    /* Rebalance: icon at the TOP, tighter rhythm, no stranded glyph. */
+    .cap-card {
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 40px 36px 42px;
+      min-height: 316px;
+      background: linear-gradient(165deg, #171717, #0f0f0f);
+    }
+    .cap-card .cap-mark {
+      order: -1;
+      margin: 0 0 30px;
+      width: 58px; height: 58px;
+      font-size: 1.6rem;
+      border-radius: 15px;
+    }
+    .cap-card .cap-index { font-size: 0.9rem; opacity: 0.75; }
+    .cap-card h3 { margin: 8px 0 14px; font-size: 2rem; }
+    .cap-card p { font-size: 0.98rem; }
     .cap-card::before {
       content: "";
       position: absolute;
@@ -1650,7 +1669,7 @@
     .cb-row { display: flex; gap: 10px; }
     .cb-row span { flex: 1; height: 50px; border-radius: 4px; background: #d5d5d8; border: 1px solid #c2c2c5; }
 
-    /* ---- 16.10 Process: SVG timeline path draw ---- */
+    /* ---- 16.10 Process: SVG timeline path draw + richer steps ---- */
     .timeline-svg {
       position: absolute; top: 12px; left: 8%; width: 84%; height: 40px;
       z-index: 0; overflow: visible;
@@ -1658,6 +1677,33 @@
     #timelinePath {
       stroke-dasharray: 1;         /* set precisely by JS */
       stroke-dashoffset: 1;
+    }
+    .timeline-spark {
+      position: absolute; top: 32px; left: 8%;
+      width: 14px; height: 14px; margin: -7px 0 0 -7px;
+      border-radius: 50%; background: var(--gold);
+      box-shadow: 0 0 18px 5px rgba(201,168,76,0.7);
+      z-index: 2; opacity: 0; pointer-events: none;
+    }
+    /* Bigger, glowing step markers with a soft pulse */
+    .step-dot {
+      position: relative;
+      width: 64px; height: 64px;
+      background: radial-gradient(circle at 50% 38%, rgba(201,168,76,0.20), var(--bg) 72%);
+      border: 1px solid var(--gold);
+      box-shadow: 0 0 0 6px rgba(201,168,76,0.05), 0 14px 34px -12px rgba(201,168,76,0.5);
+      margin-bottom: 26px;
+      z-index: 1;
+    }
+    .step-num { font-family: var(--font-head); font-size: 1.5rem; color: var(--gold); }
+    .step-eyebrow {
+      display: block; font-size: 0.66rem; letter-spacing: 0.24em;
+      text-transform: uppercase; color: var(--gold); margin-bottom: 10px;
+    }
+    .step:hover .step-dot { animation: dotPulse 1.6s var(--ease) infinite; }
+    @keyframes dotPulse {
+      0%, 100% { box-shadow: 0 0 0 6px rgba(201,168,76,0.05), 0 14px 34px -12px rgba(201,168,76,0.5); }
+      50%      { box-shadow: 0 0 0 12px rgba(201,168,76,0.0), 0 14px 34px -12px rgba(201,168,76,0.7); }
     }
 
     /* ---- 16.11 Testimonials: full-bleed drag marquee ---- */
@@ -1753,6 +1799,125 @@
     }
     .demo-card:hover::before { transform: translateX(120%); }
 
+    /* ---- 16.17 Demo cards: mini "site preview" thumbnail ---- */
+    .demo-card { justify-content: flex-start; }
+    .demo-thumb {
+      position: relative;
+      margin: 20px 0 auto;
+      border-radius: 11px;
+      border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+      background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 12%, #101010), #0c0c0c);
+      padding: 26px 14px 14px;
+      display: flex; flex-direction: column; gap: 9px;
+      overflow: hidden;
+      transition: transform 0.6s var(--ease);
+    }
+    .demo-thumb::before {              /* browser dots */
+      content: "";
+      position: absolute; top: 11px; left: 14px;
+      width: 6px; height: 6px; border-radius: 50%;
+      color: color-mix(in srgb, var(--accent) 70%, transparent);
+      background: currentColor;
+      box-shadow: 12px 0 0 color-mix(in srgb, var(--accent) 40%, transparent),
+                  24px 0 0 rgba(255,255,255,0.12);
+    }
+    .demo-thumb i { display: block; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.07); }
+    .demo-thumb i:nth-child(1) { width: 66%; height: 15px; background: color-mix(in srgb, var(--accent) 55%, transparent); }
+    .demo-thumb i:nth-child(2) { width: 100%; }
+    .demo-thumb i:nth-child(3) { width: 44%; }
+    .demo-card:hover .demo-thumb { transform: translateY(-4px) scale(1.02); }
+    .demo-meta { margin-top: 18px; }
+
+    /* ---- 16.18 Playground: balanced cards with faint watermark ---- */
+    .play-card { min-height: 260px; overflow: hidden; }
+    .play-body { align-self: center; }
+    .play-card > .play-body { margin-top: auto; margin-bottom: auto; }
+    .play-watermark {
+      position: absolute; right: -10px; bottom: -24px;
+      font-size: 8rem; line-height: 1; opacity: 0.05; pointer-events: none;
+      color: var(--gold); z-index: 0;
+    }
+
+    /* ---- 16.19 Logo slider as premium chips ---- */
+    .logo-track span {
+      font-family: var(--font-body);
+      font-size: 0.95rem; font-weight: 500;
+      letter-spacing: 0.02em;
+      padding: 11px 22px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+      color: var(--text-dim);
+      opacity: 1;
+    }
+    .logo-track { gap: 20px; }
+    .logo-track span:hover { color: var(--gold); border-color: var(--gold-line); }
+
+    /* ---- 16.20 Testimonial avatars → gold monogram ---- */
+    .quote-avatar {
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-head); font-weight: 600; font-size: 1.1rem;
+      color: var(--gold);
+      background: radial-gradient(circle at 50% 40%, rgba(201,168,76,0.22), rgba(201,168,76,0.06));
+    }
+
+    /* ---- 16.21 Contact: secondary line + email ---- */
+    .contact-alt { margin-top: 26px; font-size: 0.92rem; color: var(--text-dim); }
+    .contact-alt a { color: var(--gold); border-bottom: 1px solid var(--gold-line); padding-bottom: 1px; }
+    .contact-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.66rem; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 30px;
+    }
+    .contact-badge .pip {
+      width: 8px; height: 8px; border-radius: 50%; background: #5FBF77;
+      box-shadow: 0 0 0 0 rgba(95,191,119,0.6); animation: pip 2.2s var(--ease) infinite;
+    }
+    @keyframes pip {
+      0%   { box-shadow: 0 0 0 0 rgba(95,191,119,0.6); }
+      70%  { box-shadow: 0 0 0 10px rgba(95,191,119,0); }
+      100% { box-shadow: 0 0 0 0 rgba(95,191,119,0); }
+    }
+
+    /* ---- 16.22 Kinetic footer ---- */
+    .foot-big {
+      position: relative;
+      border-top: 1px solid var(--border);
+      padding: 90px 0 40px;
+      overflow: hidden;
+    }
+    .foot-word {
+      font-family: var(--font-head);
+      font-weight: 600;
+      font-size: clamp(4rem, 20vw, 16rem);
+      line-height: 0.9;
+      letter-spacing: -0.02em;
+      text-align: center;
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(240,240,240,0.14);
+      margin-bottom: 40px;
+      user-select: none;
+    }
+    .foot-word b { color: var(--gold); -webkit-text-stroke: 0; }
+    .foot-row {
+      max-width: var(--max); margin: 0 auto; padding: 0 32px;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 20px;
+    }
+    .foot-links { display: flex; gap: 26px; flex-wrap: wrap; }
+    .foot-links a {
+      position: relative; font-size: 0.88rem; color: var(--text-dim);
+      transition: color 0.4s var(--ease);
+    }
+    .foot-links a:hover { color: var(--text); }
+    .foot-copy { font-size: 0.8rem; color: var(--text-dim); letter-spacing: 0.04em; }
+
+    /* ---- 16.23 Marquee: alternating outline words for tension ---- */
+    .marquee-track span:nth-child(4n+1) {
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(240,240,240,0.5);
+    }
+
     /* ---- 16.16 Responsive for the new sections ---- */
     @media (max-width: 900px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
@@ -1763,6 +1928,11 @@
       .marquee-band { padding: 28px 0; }
       .faq { padding: 30px 0 110px; }
       .quote-rail-track .quote-card { width: 300px; }
+      /* Horizontal timeline connector doesn't apply to a stacked layout */
+      .timeline-svg, .timeline-spark { display: none; }
+      .cap-card { min-height: auto; }
+      .foot-big { padding: 60px 0 30px; }
+      .foot-row { flex-direction: column; text-align: center; gap: 24px; }
     }
     @media (max-width: 560px) {
       .stats-grid { grid-template-columns: 1fr; }
@@ -2020,6 +2190,7 @@
                  style="--accent:#E4572E; --accent-soft:rgba(228,87,46,0.20)">
           <div class="overlay"></div>
           <div class="demo-icon">🍽</div>
+          <div class="demo-thumb" aria-hidden="true"><i></i><i></i><i></i></div>
           <div class="demo-meta">
             <span class="demo-type">Restaurant</span>
             <div class="demo-name">Saffron Table</div>
@@ -2032,6 +2203,7 @@
                  style="--accent:#3FA7D6; --accent-soft:rgba(63,167,214,0.20)">
           <div class="overlay"></div>
           <div class="demo-icon">✚</div>
+          <div class="demo-thumb" aria-hidden="true"><i></i><i></i><i></i></div>
           <div class="demo-meta">
             <span class="demo-type">Medical Clinic</span>
             <div class="demo-name">Prisha Care</div>
@@ -2044,6 +2216,7 @@
                  style="--accent:#C879C4; --accent-soft:rgba(200,121,196,0.20)">
           <div class="overlay"></div>
           <div class="demo-icon">◈</div>
+          <div class="demo-thumb" aria-hidden="true"><i></i><i></i><i></i></div>
           <div class="demo-meta">
             <span class="demo-type">Boutique &amp; Fashion</span>
             <div class="demo-name">Maison Rue</div>
@@ -2056,6 +2229,7 @@
                  style="--accent:#5FBF77; --accent-soft:rgba(95,191,119,0.20)">
           <div class="overlay"></div>
           <div class="demo-icon">✎</div>
+          <div class="demo-thumb" aria-hidden="true"><i></i><i></i><i></i></div>
           <div class="demo-meta">
             <span class="demo-type">Coaching Institute</span>
             <div class="demo-name">Apex Academy</div>
@@ -2119,21 +2293,26 @@
         <svg class="timeline-svg" id="timelineSvg" viewBox="0 0 1000 60" preserveAspectRatio="none" aria-hidden="true">
           <path id="timelinePath" d="M 40 30 L 960 30" fill="none" stroke="var(--gold-line)" stroke-width="1.5" />
         </svg>
+        <!-- Glowing spark that rides the line as it draws -->
+        <div class="timeline-spark" id="timelineSpark" aria-hidden="true"></div>
 
         <article class="step reveal">
-          <div class="step-dot">1</div>
+          <div class="step-dot"><span class="step-num">01</span></div>
+          <span class="step-eyebrow">Discovery</span>
           <h3>You Share Your Vision</h3>
           <p>Tell us about your business and goals. We listen closely and map out exactly what your website needs to do.</p>
         </article>
 
         <article class="step reveal">
-          <div class="step-dot">2</div>
+          <div class="step-dot"><span class="step-num">02</span></div>
+          <span class="step-eyebrow">Craft</span>
           <h3>We Design &amp; Build</h3>
           <p>We craft a custom, polished experience — designing, building, and refining every detail until it feels premium.</p>
         </article>
 
         <article class="step reveal">
-          <div class="step-dot">3</div>
+          <div class="step-dot"><span class="step-num">03</span></div>
+          <span class="step-eyebrow">Launch</span>
           <h3>You Launch &amp; Grow</h3>
           <p>We handle the launch and hand you a fast, elegant site that works around the clock to bring in customers.</p>
         </article>
@@ -2154,22 +2333,22 @@
         <figure class="quote-card">
           <span class="quote-mark">“</span>
           <blockquote>Our bookings doubled within two months of launching. The site feels like it belongs to a brand ten times our size.</blockquote>
-          <figcaption class="quote-author"><div class="quote-avatar"></div><div><strong>Ananya Mehta</strong><span>Owner, Saffron Table</span></div></figcaption>
+          <figcaption class="quote-author"><div class="quote-avatar">AM</div><div><strong>Ananya Mehta</strong><span>Owner, Saffron Table</span></div></figcaption>
         </figure>
         <figure class="quote-card">
           <span class="quote-mark">“</span>
           <blockquote>They understood exactly what we needed and delivered something genuinely beautiful — and it loads instantly, even on my phone.</blockquote>
-          <figcaption class="quote-author"><div class="quote-avatar"></div><div><strong>Rohan Iyer</strong><span>Director, Apex Academy</span></div></figcaption>
+          <figcaption class="quote-author"><div class="quote-avatar">RI</div><div><strong>Rohan Iyer</strong><span>Director, Apex Academy</span></div></figcaption>
         </figure>
         <figure class="quote-card">
           <span class="quote-mark">“</span>
           <blockquote>The animations made people stop and stare. Customers keep telling us the website feels expensive — exactly the impression we wanted.</blockquote>
-          <figcaption class="quote-author"><div class="quote-avatar"></div><div><strong>Meher Kapoor</strong><span>Founder, Maison Rue</span></div></figcaption>
+          <figcaption class="quote-author"><div class="quote-avatar">MK</div><div><strong>Meher Kapoor</strong><span>Founder, Maison Rue</span></div></figcaption>
         </figure>
         <figure class="quote-card">
           <span class="quote-mark">“</span>
           <blockquote>Enquiries tripled. It finally looks like the serious clinic we always were. Worth every rupee and then some.</blockquote>
-          <figcaption class="quote-author"><div class="quote-avatar"></div><div><strong>Dr. Nikhil Rao</strong><span>Prisha Care</span></div></figcaption>
+          <figcaption class="quote-author"><div class="quote-avatar">NR</div><div><strong>Dr. Nikhil Rao</strong><span>Prisha Care</span></div></figcaption>
         </figure>
       </div>
     </div>
@@ -2229,17 +2408,30 @@
   <section class="contact" id="contact">
     <div class="contact-mesh" aria-hidden="true"></div>
     <div class="wrap">
+      <span class="contact-badge reveal"><span class="pip"></span> Available for new projects</span>
       <h2 class="reveal">Ready to get your business online?</h2>
       <button class="btn-glow ripple" type="button" data-hover>
         <span class="wa">✆</span> WhatsApp Us
       </button>
+      <p class="contact-alt reveal">Prefer email? <a href="mailto:hello@aureal.studio" data-hover>hello@aureal.studio</a></p>
       <p class="contact-note reveal">Typically replies within a few hours.</p>
     </div>
   </section>
 
-  <footer class="foot wrap">
-    <div class="brand" style="font-size:1.2rem">Aureal<span>.</span></div>
-    <div>Premium websites for Indian businesses.</div>
+  <!-- ================= KINETIC FOOTER ================= -->
+  <footer class="foot-big">
+    <div class="foot-word" aria-hidden="true">Aureal<b>.</b></div>
+    <div class="foot-row">
+      <div class="brand" style="font-size:1.2rem">Aureal<span>.</span></div>
+      <nav class="foot-links">
+        <a href="#work" data-hover>Work</a>
+        <a href="#process" data-hover>Process</a>
+        <a href="#faq" data-hover>FAQ</a>
+        <a href="#contact" data-hover>Contact</a>
+        <a href="#top" data-hover>Back to top ↑</a>
+      </nav>
+      <div class="foot-copy">© 2026 Aureal — Premium websites for Indian businesses.</div>
+    </div>
   </footer>
 
   <!-- Industry demo mini-sites mount here (built on demand by JS) -->
@@ -3029,8 +3221,10 @@
         const core = new THREE.Mesh(
           geo,
           new THREE.MeshStandardMaterial({
-            color: 0x141414, metalness: 0.65, roughness: 0.32,
-            flatShading: true, transparent: true, opacity: isMobile ? 0.92 : 0.85,
+            // Duller, rougher faces so no blown-out gold facet ever sits
+            // behind body copy — this is ambient depth, not a focal object.
+            color: 0x121212, metalness: 0.5, roughness: 0.62,
+            flatShading: true, transparent: true, opacity: isMobile ? 0.8 : 0.6,
           })
         );
         group.add(core);
@@ -3038,7 +3232,7 @@
         const wire = new THREE.LineSegments(
           new THREE.EdgesGeometry(geo),
           new THREE.LineBasicMaterial({
-            color: GOLD, transparent: true, opacity: isMobile ? 0.75 : 0.55,
+            color: GOLD, transparent: true, opacity: isMobile ? 0.55 : 0.34,
           })
         );
         group.add(wire);
@@ -3062,11 +3256,11 @@
         );
         scene.add(particles);
 
-        // Lighting
-        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-        const key = new THREE.PointLight(GOLD, 2.2, 60);
+        // Lighting — softened so facets stay subtle behind content.
+        scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+        const key = new THREE.PointLight(GOLD, 1.5, 60);
         key.position.set(5, 5, 6); scene.add(key);
-        const rim = new THREE.PointLight(0x88bbff, 1.0, 60);
+        const rim = new THREE.PointLight(0x88bbff, 0.7, 60);
         rim.position.set(-6, -3, 4); scene.add(rim);
 
         // Bigger on phones so it's unmistakably visible; smaller travel range
@@ -3360,6 +3554,18 @@
          momentum dial the visitor can flick.
          -------------------------------------------------------- */
       function initPlayground() {
+        // Give each card a faint oversized watermark of its own icon so the
+        // composition never feels empty.
+        document.querySelectorAll(".play-card").forEach((card) => {
+          const ic = card.querySelector(".play-ic");
+          if (!ic || card.querySelector(".play-watermark")) return;
+          const wm = document.createElement("span");
+          wm.className = "play-watermark";
+          wm.setAttribute("aria-hidden", "true");
+          wm.textContent = ic.textContent;
+          card.insertBefore(wm, card.firstChild);
+        });
+
         // Cursor spotlight
         const spotCard = document.getElementById("playSpotlight");
         if (spotCard) {
@@ -3625,6 +3831,15 @@
           strokeDashoffset: 0, ease: "none",
           scrollTrigger: { trigger: ".timeline", start: "top 80%", end: "top 35%", scrub: 1 },
         });
+        // A glowing spark rides the connector as it draws.
+        const spark = document.getElementById("timelineSpark");
+        if (spark) {
+          gsap.set(spark, { opacity: 1 });
+          gsap.fromTo(spark, { left: "8%" }, {
+            left: "92%", ease: "none",
+            scrollTrigger: { trigger: ".timeline", start: "top 80%", end: "top 35%", scrub: 1 },
+          });
+        }
       }
 
       /* 20. TESTIMONIAL RAIL — seamless auto-scroll + drag-to-scrub inertia. */
