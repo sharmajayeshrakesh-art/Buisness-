@@ -1,7 +1,8 @@
 # Local dev tooling (Playwright verification harness) — not part of the deliverable
-node_modules/
-package.json
-package-lock.json
+# Anchored to repo root so the spline-app/ project's own package.json is NOT ignored.
+/node_modules/
+/package.json
+/package-lock.json
 
 # Scratch / test artifacts
 *.png
