@@ -2044,10 +2044,23 @@
       .logo-track, .cap-card:hover::before { animation: none !important; }
       .marquee { transform: none !important; }
     }
+    /* Build/version badge + 3D-health indicator */
+    #buildbadge{position:fixed;left:12px;bottom:12px;z-index:99999;
+      font:600 11px/1 var(--font-body,system-ui,sans-serif);letter-spacing:.08em;
+      color:#9096a0;background:rgba(10,10,12,.72);padding:8px 12px;
+      border:1px solid rgba(255,255,255,.14);border-radius:22px;pointer-events:none;
+      text-transform:uppercase;}
+    #bb3d{color:#e0a24a;}
+    #buildbadge.ok #bb3d{color:#5fbf77;}
+    #buildbadge.fail #bb3d{color:#ff6b6b;}
   </style>
 </head>
 
 <body>
+  <!-- Build badge — lets you confirm you're on the newest version and whether
+       the 3D engine actually started (turns green when the WebGL world loads). -->
+  <div id="buildbadge">AUREAL build v22 · <span id="bb3d">3D loading…</span></div>
+
   <!-- The immersive WebGL world (single persistent scene the camera
        travels through) lives on this one fixed canvas behind all content. -->
   <canvas id="world" aria-hidden="true"></canvas>
@@ -9854,6 +9867,21 @@ var k="1.1.14";function w(r,t,e){return Math.max(r,Math.min(t,e))}function _(r,t
       let rt2; addEventListener('resize', () => { clearTimeout(rt2); rt2 = setTimeout(onResize, 180); }, { passive: true });
     }
   })();
+  </script>
+  <script>
+    /* Build badge diagnostic: flips to green "3D ✓" once the WebGL world is
+       live, or red "3D failed" if it never starts (so a cached/broken view
+       is obvious at a glance). */
+    (function () {
+      var b = document.getElementById('buildbadge'), d = document.getElementById('bb3d');
+      if (!b || !d) return;
+      var t0 = Date.now();
+      var iv = setInterval(function () {
+        var w = document.getElementById('world');
+        if (w && w.classList.contains('ready')) { b.className = 'ok'; d.textContent = '3D ✓ live'; clearInterval(iv); }
+        else if (Date.now() - t0 > 12000) { b.className = 'fail'; d.textContent = '3D failed (WebGL off?)'; clearInterval(iv); }
+      }, 400);
+    })();
   </script>
 </body>
 </html>
